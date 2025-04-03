@@ -41,20 +41,34 @@ def chat():
     try:
         data = request.json
         message = data.get('message', '')
+        response = data.get('response', '')
+        metadata = data.get('metadata', None)
         
         # Store conversation history in session
         if 'conversation' not in session:
             session['conversation'] = []
         
         # Add user message to conversation history
-        session['conversation'].append({"role": "user", "content": message})
+        session['conversation'].append({
+            "role": "user", 
+            "content": message
+        })
         
-        # In a real implementation, this would call Puter.js API
-        # For now, we'll simulate this on the frontend since Puter.js is client-side
+        # Add assistant response to conversation history
+        session['conversation'].append({
+            "role": "assistant", 
+            "content": response,
+            "metadata": metadata
+        })
+        
+        # In a real implementation with server-side processing, we could call different AI models here
+        # based on the HACF layer required. For now, we're using Puter.js on the client side.
+        
+        logger.debug(f"Processed message through HACF framework. Metadata: {metadata}")
         
         return jsonify({
             "status": "success",
-            "message": "Message received"
+            "message": "Message received and processed"
         })
     except Exception as e:
         logger.error(f"Error in chat endpoint: {str(e)}")

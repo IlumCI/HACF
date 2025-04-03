@@ -28,6 +28,11 @@ class Message(db.Model):
     is_user = db.Column(db.Boolean, default=True)  # True if from user, False if from AI
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
     
+    # HACF specific fields
+    hacf_layer = db.Column(db.String(50), nullable=True)  # Which HACF layer processed this message
+    hacf_layer_number = db.Column(db.Integer, nullable=True)  # Numerical identifier for the layer (1-5)
+    layer_metadata = db.Column(db.Text, nullable=True)  # Additional metadata from layer processing
+    
     def __repr__(self):
         return f'<Message {self.id}>'
 
@@ -36,13 +41,37 @@ class Project(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
     title = db.Column(db.String(100), nullable=False)
     description = db.Column(db.Text)
-    task_definition = db.Column(db.Text)
-    refined_structure = db.Column(db.Text)
-    development_code = db.Column(db.Text)
-    optimized_code = db.Column(db.Text)
-    files = db.Column(db.Text)  # JSON string of files generated
+    
+    # HACF layers output
+    task_definition = db.Column(db.Text)  # Layer 1: Task Definition & Planning
+    refined_structure = db.Column(db.Text)  # Layer 2: Refinement & Base Structure
+    development_code = db.Column(db.Text)  # Layer 3: Development & Execution
+    optimized_code = db.Column(db.Text)  # Layer 4: Debugging, Optimization & Security
+    files = db.Column(db.Text)  # JSON string of files generated - Layer 5: Final Output
+    
+    # Layered process flags
+    layer1_complete = db.Column(db.Boolean, default=False)
+    layer2_complete = db.Column(db.Boolean, default=False)
+    layer3_complete = db.Column(db.Boolean, default=False)
+    layer4_complete = db.Column(db.Boolean, default=False)
+    layer5_complete = db.Column(db.Boolean, default=False)
+    
+    # Date tracking
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    completed_at = db.Column(db.DateTime, nullable=True)
     
     def __repr__(self):
         return f'<Project {self.title}>'
+    
+    @property
+    def progress(self):
+        """Calculate project completion percentage based on completed layers"""
+        completed_layers = sum([
+            self.layer1_complete,
+            self.layer2_complete,
+            self.layer3_complete,
+            self.layer4_complete,
+            self.layer5_complete
+        ])
+        return (completed_layers / 5) * 100
