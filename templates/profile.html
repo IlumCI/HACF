@@ -1,0 +1,435 @@
+{% extends 'base.html' %}
+
+{% block title %}Profile - HACF Platform{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row">
+        <div class="col-md-3">
+            <!-- Profile Sidebar -->
+            <div class="card shadow mb-4">
+                <div class="card-body text-center">
+                    {% if current_user.profile_picture %}
+                    <img src="{{ current_user.profile_picture }}" alt="{{ current_user.username }}" class="rounded-circle img-fluid mb-3" style="width: 150px; height: 150px; object-fit: cover;">
+                    {% else %}
+                    <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 150px; height: 150px; font-size: 4rem;">
+                        {{ current_user.username[0]|upper }}
+                    </div>
+                    {% endif %}
+                    <h5 class="mb-0">{{ current_user.username }}</h5>
+                    <p class="text-muted">{{ current_user.job_title }}</p>
+                    <p class="text-muted">{{ current_user.company }}</p>
+                    <p class="small">
+                        <i class="bi bi-geo-alt-fill"></i> {{ current_user.location or 'Location not set' }}
+                    </p>
+                    <div class="d-grid gap-2">
+                        <a href="#" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#edit-profile-modal">
+                            <i class="bi bi-pencil-square"></i> Edit Profile
+                        </a>
+                    </div>
+                </div>
+                <div class="list-group list-group-flush">
+                    <a href="#profile-tab" class="list-group-item list-group-item-action active" data-bs-toggle="list">
+                        <i class="bi bi-person"></i> Profile Info
+                    </a>
+                    <a href="#preferences-tab" class="list-group-item list-group-item-action" data-bs-toggle="list">
+                        <i class="bi bi-sliders"></i> Preferences
+                    </a>
+                    <a href="#api-tab" class="list-group-item list-group-item-action" data-bs-toggle="list">
+                        <i class="bi bi-key"></i> API Settings
+                    </a>
+                    <a href="#security-tab" class="list-group-item list-group-item-action" data-bs-toggle="list">
+                        <i class="bi bi-shield-lock"></i> Security
+                    </a>
+                    <a href="#teams-tab" class="list-group-item list-group-item-action" data-bs-toggle="list">
+                        <i class="bi bi-people"></i> Teams
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-9">
+            <!-- Flash messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+            {% endif %}
+            {% endwith %}
+            
+            <!-- Tab Content -->
+            <div class="tab-content">
+                <!-- Profile Info Tab -->
+                <div class="tab-pane fade show active" id="profile-tab">
+                    <div class="card shadow">
+                        <div class="card-header">
+                            <h5 class="mb-0">Profile Information</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row mb-4">
+                                <div class="col-md-3 text-muted">Bio</div>
+                                <div class="col-md-9">
+                                    {% if current_user.bio %}
+                                    {{ current_user.bio }}
+                                    {% else %}
+                                    <span class="text-muted fst-italic">No bio added yet.</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="row mb-4">
+                                <div class="col-md-3 text-muted">Email</div>
+                                <div class="col-md-9">{{ current_user.email }}</div>
+                            </div>
+                            <div class="row mb-4">
+                                <div class="col-md-3 text-muted">Job Title</div>
+                                <div class="col-md-9">
+                                    {% if current_user.job_title %}
+                                    {{ current_user.job_title }}
+                                    {% else %}
+                                    <span class="text-muted fst-italic">Not provided</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="row mb-4">
+                                <div class="col-md-3 text-muted">Company</div>
+                                <div class="col-md-9">
+                                    {% if current_user.company %}
+                                    {{ current_user.company }}
+                                    {% else %}
+                                    <span class="text-muted fst-italic">Not provided</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="row mb-4">
+                                <div class="col-md-3 text-muted">Website</div>
+                                <div class="col-md-9">
+                                    {% if current_user.website %}
+                                    <a href="{{ current_user.website }}" target="_blank">{{ current_user.website }}</a>
+                                    {% else %}
+                                    <span class="text-muted fst-italic">Not provided</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="row mb-4">
+                                <div class="col-md-3 text-muted">Location</div>
+                                <div class="col-md-9">
+                                    {% if current_user.location %}
+                                    {{ current_user.location }}
+                                    {% else %}
+                                    <span class="text-muted fst-italic">Not provided</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-3 text-muted">Joined</div>
+                                <div class="col-md-9">{{ current_user.registration_date.strftime('%B %d, %Y') }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Preferences Tab -->
+                <div class="tab-pane fade" id="preferences-tab">
+                    <div class="card shadow">
+                        <div class="card-header">
+                            <h5 class="mb-0">User Preferences</h5>
+                        </div>
+                        <div class="card-body">
+                            <form action="{{ url_for('update_preferences') }}" method="POST">
+                                <h6>Theme Preferences</h6>
+                                <div class="mb-4">
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="theme_preference" id="theme-dark" value="dark" {% if current_user.theme_preference == 'dark' %}checked{% endif %}>
+                                        <label class="form-check-label" for="theme-dark">Dark Theme</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="theme_preference" id="theme-light" value="light" {% if current_user.theme_preference == 'light' %}checked{% endif %}>
+                                        <label class="form-check-label" for="theme-light">Light Theme</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="theme_preference" id="theme-system" value="system" {% if current_user.theme_preference == 'system' %}checked{% endif %}>
+                                        <label class="form-check-label" for="theme-system">System Default</label>
+                                    </div>
+                                </div>
+                                
+                                <h6>Technology Preferences</h6>
+                                <div class="mb-4">
+                                    <div class="form-text mb-2">Select technologies you prefer to work with. These will be used to personalize project suggestions.</div>
+                                    <div id="tech-prefs" class="d-flex flex-wrap gap-2">
+                                        {% set preferred_techs = current_user.preferred_technologies|default('[]')|tojson|safe|from_json %}
+                                        {% for tech in ['Python', 'JavaScript', 'React', 'Vue.js', 'Angular', 'Node.js', 'Flask', 'Django', 'Express', 'PostgreSQL', 'MongoDB', 'MySQL', 'Docker', 'AWS', 'Firebase', 'TensorFlow', 'PyTorch'] %}
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="preferred_technologies[]" value="{{ tech }}" id="tech-{{ loop.index }}" {% if tech in preferred_techs %}checked{% endif %}>
+                                            <label class="form-check-label" for="tech-{{ loop.index }}">{{ tech }}</label>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                
+                                <h6>Notification Settings</h6>
+                                <div class="mb-4">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="email-notifications" name="email_notifications" {% if current_user.email_notifications %}checked{% endif %}>
+                                        <label class="form-check-label" for="email-notifications">Email Notifications</label>
+                                    </div>
+                                </div>
+                                
+                                <div class="d-grid gap-2">
+                                    <button type="submit" class="btn btn-primary">Save Preferences</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- API Settings Tab -->
+                <div class="tab-pane fade" id="api-tab">
+                    <div class="card shadow">
+                        <div class="card-header">
+                            <h5 class="mb-0">API Settings</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-4">
+                                <h6>Your API Key</h6>
+                                <p class="text-muted small">Use this key to interact with the HACF Platform API. Never share your API key publicly.</p>
+                                
+                                {% if current_user.api_key %}
+                                <div class="input-group mb-3">
+                                    <input type="text" class="form-control font-monospace" id="api-key-display" value="{{ current_user.api_key }}" readonly>
+                                    <button class="btn btn-outline-secondary" type="button" onclick="copyApiKey()">
+                                        <i class="bi bi-clipboard"></i>
+                                    </button>
+                                </div>
+                                <button class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#regenerate-api-key-modal">
+                                    <i class="bi bi-arrow-repeat"></i> Regenerate Key
+                                </button>
+                                {% else %}
+                                <p>You don't have an API key yet.</p>
+                                <form action="{{ url_for('generate_api_key') }}" method="POST">
+                                    <button type="submit" class="btn btn-primary">Generate API Key</button>
+                                </form>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="mb-4">
+                                <h6>API Usage</h6>
+                                <div class="progress mb-2" style="height: 20px;">
+                                    {% set usage_percentage = (current_user.api_usage_count / current_user.api_quota * 100) if current_user.api_quota > 0 else 0 %}
+                                    <div class="progress-bar 
+                                        {% if usage_percentage < 50 %}bg-success{% elif usage_percentage < 80 %}bg-warning{% else %}bg-danger{% endif %}" 
+                                        role="progressbar" 
+                                        style="width: {{ usage_percentage }}%;" 
+                                        aria-valuenow="{{ current_user.api_usage_count }}" 
+                                        aria-valuemin="0" 
+                                        aria-valuemax="{{ current_user.api_quota }}">
+                                        {{ current_user.api_usage_count }} / {{ current_user.api_quota }}
+                                    </div>
+                                </div>
+                                <p class="text-muted small">You have used {{ current_user.api_usage_count }} out of {{ current_user.api_quota }} available API calls this month.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Security Tab -->
+                <div class="tab-pane fade" id="security-tab">
+                    <div class="card shadow">
+                        <div class="card-header">
+                            <h5 class="mb-0">Security Settings</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-4">
+                                <h6>Change Password</h6>
+                                <form action="{{ url_for('change_password') }}" method="POST">
+                                    <div class="mb-3">
+                                        <label for="current-password" class="form-label">Current Password</label>
+                                        <input type="password" class="form-control" id="current-password" name="current_password" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="new-password" class="form-label">New Password</label>
+                                        <input type="password" class="form-control" id="new-password" name="new_password" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="confirm-new-password" class="form-label">Confirm New Password</label>
+                                        <input type="password" class="form-control" id="confirm-new-password" name="confirm_new_password" required>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary">Change Password</button>
+                                </form>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <h6>Recent Login Activity</h6>
+                                <p class="text-muted">Last login: {{ current_user.last_login.strftime('%B %d, %Y at %H:%M') if current_user.last_login else 'N/A' }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Teams Tab -->
+                <div class="tab-pane fade" id="teams-tab">
+                    <div class="card shadow">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">Your Teams</h5>
+                            <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#create-team-modal">
+                                <i class="bi bi-plus-lg"></i> Create Team
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            {% if teams %}
+                            <div class="list-group">
+                                {% for team_member in teams %}
+                                <div class="list-group-item list-group-item-action">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">{{ team_member.team.name }}</h6>
+                                        <small class="text-muted">{{ team_member.role|title }}</small>
+                                    </div>
+                                    <p class="mb-1">{{ team_member.team.description }}</p>
+                                    <small>{{ team_member.team.members|length }} members</small>
+                                    <div class="mt-2">
+                                        <a href="{{ url_for('team_detail', team_id=team_member.team.id) }}" class="btn btn-sm btn-outline-primary">View Team</a>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                            <div class="text-center py-4">
+                                <div class="mb-3">
+                                    <i class="bi bi-people fs-1 text-muted"></i>
+                                </div>
+                                <h6>You're not part of any teams yet</h6>
+                                <p class="text-muted">Create a team or ask to be invited to collaborate with others.</p>
+                                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#create-team-modal">
+                                    <i class="bi bi-plus-lg"></i> Create Team
+                                </button>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Profile Modal -->
+<div class="modal fade" id="edit-profile-modal" tabindex="-1" aria-labelledby="edit-profile-modal-label" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="edit-profile-modal-label">Edit Profile</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form action="{{ url_for('update_profile') }}" method="POST">
+                    <div class="mb-3">
+                        <label for="profile-picture" class="form-label">Profile Picture URL</label>
+                        <input type="url" class="form-control" id="profile-picture" name="profile_picture" value="{{ current_user.profile_picture or '' }}">
+                        <div class="form-text">Enter a URL for your profile picture.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="bio" class="form-label">Bio</label>
+                        <textarea class="form-control" id="bio" name="bio" rows="3">{{ current_user.bio or '' }}</textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="job-title" class="form-label">Job Title</label>
+                                <input type="text" class="form-control" id="job-title" name="job_title" value="{{ current_user.job_title or '' }}">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="company" class="form-label">Company</label>
+                                <input type="text" class="form-control" id="company" name="company" value="{{ current_user.company or '' }}">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="website" class="form-label">Website</label>
+                        <input type="url" class="form-control" id="website" name="website" value="{{ current_user.website or '' }}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="location" class="form-label">Location</label>
+                        <input type="text" class="form-control" id="location" name="location" value="{{ current_user.location or '' }}">
+                    </div>
+                    <div class="text-end">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create Team Modal -->
+<div class="modal fade" id="create-team-modal" tabindex="-1" aria-labelledby="create-team-modal-label" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="create-team-modal-label">Create New Team</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form action="{{ url_for('create_team') }}" method="POST">
+                    <div class="mb-3">
+                        <label for="team-name" class="form-label">Team Name</label>
+                        <input type="text" class="form-control" id="team-name" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="team-description" class="form-label">Description</label>
+                        <textarea class="form-control" id="team-description" name="description" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="team-avatar" class="form-label">Team Avatar URL (optional)</label>
+                        <input type="url" class="form-control" id="team-avatar" name="avatar">
+                    </div>
+                    <div class="text-end">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Create Team</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Regenerate API Key Modal -->
+<div class="modal fade" id="regenerate-api-key-modal" tabindex="-1" aria-labelledby="regenerate-api-key-modal-label" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="regenerate-api-key-modal-label">Regenerate API Key</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle-fill"></i> Warning: Regenerating your API key will invalidate your current key. Any applications using your current key will need to be updated.
+                </div>
+                <p>Are you sure you want to regenerate your API key?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form action="{{ url_for('regenerate_api_key') }}" method="POST">
+                    <button type="submit" class="btn btn-danger">Regenerate Key</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function copyApiKey() {
+        const apiKeyInput = document.getElementById('api-key-display');
+        apiKeyInput.select();
+        document.execCommand('copy');
+        alert('API key copied to clipboard!');
+    }
+</script>
+{% endblock %}

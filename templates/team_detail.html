@@ -1,0 +1,201 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ team.name }} Team - HACF Platform{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <!-- Flash messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    {% for category, message in messages %}
+    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endfor %}
+    {% endif %}
+    {% endwith %}
+
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2 class="mb-0">
+                {% if team.avatar %}
+                <img src="{{ team.avatar }}" alt="{{ team.name }}" class="rounded-circle me-2" style="width: 50px; height: 50px; object-fit: cover;">
+                {% else %}
+                <div class="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center me-2" style="width: 50px; height: 50px; font-size: 1.5rem;">
+                    {{ team.name[0]|upper }}
+                </div>
+                {% endif %}
+                {{ team.name }}
+            </h2>
+            <p class="text-muted">{{ team.description }}</p>
+        </div>
+        <div class="col-md-4 text-end">
+            {% if current_member and current_member.role in ['owner', 'admin'] %}
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#invite-member-modal">
+                <i class="bi bi-person-plus"></i> Invite Member
+            </button>
+            {% endif %}
+            {% if current_member %}
+            <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#add-project-modal">
+                <i class="bi bi-folder-plus"></i> Add Project
+            </button>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-4">
+            <!-- Team Details Card -->
+            <div class="card shadow mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Team Details</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Created by:</strong> {{ team.owner_id }}</p>
+                    <p><strong>Members:</strong> {{ members|length }}</p>
+                    <p><strong>Projects:</strong> {{ team_projects|length }}</p>
+                    <p><strong>Created:</strong> {{ team.created_at.strftime('%B %d, %Y') }}</p>
+                </div>
+            </div>
+
+            <!-- Team Members Card -->
+            <div class="card shadow">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Team Members</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        {% for member in members %}
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <span class="fw-bold">{{ member.user_id }}</span>
+                                <span class="badge bg-secondary">{{ member.role|title }}</span>
+                            </div>
+                            {% if current_member and current_member.role in ['owner', 'admin'] and member.user_id != team.owner_id %}
+                            <form action="{{ url_for('remove_team_member', team_id=team.id, user_id=member.user_id) }}" method="POST" class="d-inline">
+                                <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure you want to remove this member?')">
+                                    <i class="bi bi-person-x"></i>
+                                </button>
+                            </form>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-8">
+            <!-- Team Projects Card -->
+            <div class="card shadow">
+                <div class="card-header">
+                    <h5 class="mb-0">Team Projects</h5>
+                </div>
+                <div class="card-body">
+                    {% if team_projects %}
+                    <div class="row row-cols-1 row-cols-md-2 g-4">
+                        {% for team_project in team_projects %}
+                        <div class="col">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title">{{ team_project.project.title }}</h5>
+                                    <p class="card-text text-muted small">{{ team_project.project.description|truncate(100) }}</p>
+                                    <div class="progress mb-2" style="height: 10px;">
+                                        <div class="progress-bar bg-primary" role="progressbar" style="width: {{ team_project.project.progress }}%;" 
+                                            aria-valuenow="{{ team_project.project.progress }}" aria-valuemin="0" aria-valuemax="100">
+                                        </div>
+                                    </div>
+                                    <p class="small text-muted mb-0">Progress: {{ team_project.project.progress|int }}%</p>
+                                </div>
+                                <div class="card-footer bg-transparent">
+                                    <a href="{{ url_for('project_detail', project_id=team_project.project_id) }}" class="btn btn-sm btn-primary">View Project</a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <div class="mb-3">
+                            <i class="bi bi-folder-x fs-1 text-muted"></i>
+                        </div>
+                        <h6>No projects added to this team yet</h6>
+                        <p class="text-muted">Add a project to start collaborating with your team.</p>
+                        {% if current_member %}
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#add-project-modal">
+                            <i class="bi bi-folder-plus"></i> Add Project
+                        </button>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Invite Member Modal -->
+<div class="modal fade" id="invite-member-modal" tabindex="-1" aria-labelledby="invite-member-modal-label" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="invite-member-modal-label">Invite Team Member</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form action="{{ url_for('invite_team_member', team_id=team.id) }}" method="POST">
+                    <div class="mb-3">
+                        <label for="email" class="form-label">User Email</label>
+                        <input type="email" class="form-control" id="email" name="email" required>
+                        <div class="form-text">Enter the email address of the user you want to invite.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="role" class="form-label">Role</label>
+                        <select class="form-select" id="role" name="role">
+                            <option value="member">Member</option>
+                            <option value="admin">Admin</option>
+                            <option value="viewer">Viewer</option>
+                        </select>
+                    </div>
+                    <div class="text-end">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Invite</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Project Modal -->
+<div class="modal fade" id="add-project-modal" tabindex="-1" aria-labelledby="add-project-modal-label" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="add-project-modal-label">Add Project to Team</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form action="{{ url_for('add_project_to_team', team_id=team.id) }}" method="POST">
+                    <div class="mb-3">
+                        <label for="project_id" class="form-label">Select Project</label>
+                        <select class="form-select" id="project_id" name="project_id" required>
+                            <option value="">Select a project</option>
+                            {% for project in current_user.projects %}
+                            {% if project not in team_projects %}
+                            <option value="{{ project.id }}">{{ project.title }}</option>
+                            {% endif %}
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="text-end">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Add Project</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

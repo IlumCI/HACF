@@ -138,7 +138,9 @@ def logout():
 @app.route('/profile')
 @login_required
 def profile():
-    return render_template('profile.html')
+    # Get teams the user is a member of
+    teams = models.TeamMember.query.filter_by(user_id=current_user.id).all()
+    return render_template('profile.html', teams=teams)
 
 @app.route('/dashboard')
 @login_required
@@ -577,6 +579,431 @@ def clear_conversation():
         "status": "success",
         "message": "Conversation cleared"
     })
+
+# Profile Management Routes
+@app.route('/update_profile', methods=['POST'])
+@login_required
+def update_profile():
+    try:
+        # Update user profile information
+        current_user.profile_picture = request.form.get('profile_picture', current_user.profile_picture)
+        current_user.bio = request.form.get('bio', current_user.bio)
+        current_user.job_title = request.form.get('job_title', current_user.job_title)
+        current_user.company = request.form.get('company', current_user.company)
+        current_user.website = request.form.get('website', current_user.website)
+        current_user.location = request.form.get('location', current_user.location)
+        
+        db.session.commit()
+        
+        flash('Profile updated successfully.', 'success')
+    except Exception as e:
+        flash(f'An error occurred: {str(e)}', 'danger')
+        logger.error(f"Error updating profile: {str(e)}")
+    
+    return redirect(url_for('profile'))
+
+@app.route('/update_preferences', methods=['POST'])
+@login_required
+def update_preferences():
+    try:
+        # Update user preferences
+        current_user.theme_preference = request.form.get('theme_preference', 'dark')
+        current_user.email_notifications = 'email_notifications' in request.form
+        
+        # Handle preferred technologies (comes as a list from form)
+        tech_list = request.form.getlist('preferred_technologies[]')
+        if tech_list:
+            current_user.preferred_technologies = json.dumps(tech_list)
+        
+        db.session.commit()
+        
+        flash('Preferences updated successfully.', 'success')
+    except Exception as e:
+        flash(f'An error occurred: {str(e)}', 'danger')
+        logger.error(f"Error updating preferences: {str(e)}")
+    
+    return redirect(url_for('profile'))
+
+@app.route('/change_password', methods=['POST'])
+@login_required
+def change_password():
+    try:
+        current_password = request.form.get('current_password')
+        new_password = request.form.get('new_password')
+        confirm_new_password = request.form.get('confirm_new_password')
+        
+        # Validate current password
+        if not current_user.check_password(current_password):
+            flash('Current password is incorrect.', 'danger')
+            return redirect(url_for('profile'))
+        
+        # Validate new password match
+        if new_password != confirm_new_password:
+            flash('New passwords do not match.', 'danger')
+            return redirect(url_for('profile'))
+        
+        # Update password
+        current_user.set_password(new_password)
+        db.session.commit()
+        
+        flash('Password changed successfully.', 'success')
+    except Exception as e:
+        flash(f'An error occurred: {str(e)}', 'danger')
+        logger.error(f"Error changing password: {str(e)}")
+    
+    return redirect(url_for('profile'))
+
+@app.route('/generate_api_key', methods=['POST'])
+@login_required
+def generate_api_key():
+    try:
+        import secrets
+        # Generate a random API key
+        api_key = secrets.token_hex(32)
+        
+        current_user.api_key = api_key
+        db.session.commit()
+        
+        flash('API key generated successfully.', 'success')
+    except Exception as e:
+        flash(f'An error occurred: {str(e)}', 'danger')
+        logger.error(f"Error generating API key: {str(e)}")
+    
+    return redirect(url_for('profile'))
+
+@app.route('/regenerate_api_key', methods=['POST'])
+@login_required
+def regenerate_api_key():
+    try:
+        import secrets
+        # Generate a new random API key
+        api_key = secrets.token_hex(32)
+        
+        current_user.api_key = api_key
+        db.session.commit()
+        
+        flash('API key regenerated successfully.', 'success')
+    except Exception as e:
+        flash(f'An error occurred: {str(e)}', 'danger')
+        logger.error(f"Error regenerating API key: {str(e)}")
+    
+    return redirect(url_for('profile'))
+
+# Team Management Routes
+@app.route('/create_team', methods=['POST'])
+@login_required
+def create_team():
+    try:
+        name = request.form.get('name')
+        description = request.form.get('description', '')
+        avatar = request.form.get('avatar', '')
+        
+        if not name:
+            flash('Team name is required.', 'danger')
+            return redirect(url_for('profile'))
+        
+        # Create new team
+        team = models.Team(
+            name=name,
+            description=description,
+            avatar=avatar,
+            owner_id=current_user.id
+        )
+        db.session.add(team)
+        db.session.flush()  # Flush to get the team ID
+        
+        # Add current user as owner
+        team_member = models.TeamMember(
+            team_id=team.id,
+            user_id=current_user.id,
+            role='owner'
+        )
+        db.session.add(team_member)
+        
+        db.session.commit()
+        
+        flash(f'Team "{name}" created successfully.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'An error occurred: {str(e)}', 'danger')
+        logger.error(f"Error creating team: {str(e)}")
+    
+    return redirect(url_for('profile'))
+
+@app.route('/team/<int:team_id>')
+@login_required
+def team_detail(team_id):
+    # Get team information
+    team = models.Team.query.get_or_404(team_id)
+    
+    # Check if user is a member of the team
+    team_member = models.TeamMember.query.filter_by(team_id=team_id, user_id=current_user.id).first()
+    
+    if not team_member and team.owner_id != current_user.id and current_user.role != 'admin':
+        flash('You are not a member of this team.', 'danger')
+        return redirect(url_for('profile'))
+    
+    # Get team members
+    members = models.TeamMember.query.filter_by(team_id=team_id).all()
+    
+    # Get team projects
+    team_projects = models.TeamProject.query.filter_by(team_id=team_id).all()
+    
+    return render_template('team_detail.html', team=team, members=members, team_projects=team_projects, current_member=team_member)
+
+@app.route('/team/<int:team_id>/invite', methods=['POST'])
+@login_required
+def invite_team_member(team_id):
+    team = models.Team.query.get_or_404(team_id)
+    
+    # Check if user is authorized to invite members
+    team_member = models.TeamMember.query.filter_by(team_id=team_id, user_id=current_user.id).first()
+    
+    if not team_member or team_member.role not in ['owner', 'admin']:
+        flash('You do not have permission to invite members to this team.', 'danger')
+        return redirect(url_for('team_detail', team_id=team_id))
+    
+    email = request.form.get('email')
+    role = request.form.get('role', 'member')
+    
+    if not email:
+        flash('Email is required.', 'danger')
+        return redirect(url_for('team_detail', team_id=team_id))
+    
+    # Find user by email
+    user = models.User.query.filter_by(email=email).first()
+    
+    if not user:
+        flash(f'No user found with email {email}.', 'danger')
+        return redirect(url_for('team_detail', team_id=team_id))
+    
+    # Check if user is already a member
+    existing_member = models.TeamMember.query.filter_by(team_id=team_id, user_id=user.id).first()
+    
+    if existing_member:
+        flash(f'User {user.username} is already a member of this team.', 'warning')
+        return redirect(url_for('team_detail', team_id=team_id))
+    
+    # Add user to team
+    new_member = models.TeamMember(
+        team_id=team_id,
+        user_id=user.id,
+        role=role
+    )
+    db.session.add(new_member)
+    db.session.commit()
+    
+    flash(f'User {user.username} invited to the team successfully.', 'success')
+    return redirect(url_for('team_detail', team_id=team_id))
+
+@app.route('/team/<int:team_id>/remove/<int:user_id>', methods=['POST'])
+@login_required
+def remove_team_member(team_id, user_id):
+    team = models.Team.query.get_or_404(team_id)
+    
+    # Check if user is authorized to remove members
+    team_member = models.TeamMember.query.filter_by(team_id=team_id, user_id=current_user.id).first()
+    
+    if not team_member or team_member.role not in ['owner', 'admin']:
+        flash('You do not have permission to remove members from this team.', 'danger')
+        return redirect(url_for('team_detail', team_id=team_id))
+    
+    # Cannot remove the owner
+    if user_id == team.owner_id:
+        flash('Cannot remove the team owner.', 'danger')
+        return redirect(url_for('team_detail', team_id=team_id))
+    
+    # Find the member to remove
+    member_to_remove = models.TeamMember.query.filter_by(team_id=team_id, user_id=user_id).first()
+    
+    if not member_to_remove:
+        flash('Member not found.', 'danger')
+        return redirect(url_for('team_detail', team_id=team_id))
+    
+    db.session.delete(member_to_remove)
+    db.session.commit()
+    
+    flash('Member removed successfully.', 'success')
+    return redirect(url_for('team_detail', team_id=team_id))
+
+# Project Template Routes
+@app.route('/templates')
+@login_required
+def project_templates():
+    # Get public templates and user's own templates
+    public_templates = models.ProjectTemplate.query.filter_by(is_public=True).all()
+    user_templates = models.ProjectTemplate.query.filter_by(user_id=current_user.id).all()
+    
+    return render_template('templates.html', public_templates=public_templates, user_templates=user_templates)
+
+@app.route('/create_template', methods=['POST'])
+@login_required
+def create_template():
+    try:
+        name = request.form.get('name')
+        description = request.form.get('description', '')
+        configuration = request.form.get('configuration', '{}')
+        is_public = 'is_public' in request.form
+        category = request.form.get('category', 'general')
+        tags = request.form.get('tags', '')
+        
+        if not name:
+            flash('Template name is required.', 'danger')
+            return redirect(url_for('project_templates'))
+        
+        # Create new template
+        template = models.ProjectTemplate(
+            name=name,
+            description=description,
+            configuration=configuration,
+            is_public=is_public,
+            category=category,
+            tags=json.dumps(tags.split(',')) if tags else '[]',
+            user_id=current_user.id
+        )
+        db.session.add(template)
+        db.session.commit()
+        
+        flash(f'Template "{name}" created successfully.', 'success')
+    except Exception as e:
+        flash(f'An error occurred: {str(e)}', 'danger')
+        logger.error(f"Error creating template: {str(e)}")
+    
+    return redirect(url_for('project_templates'))
+
+@app.route('/use_template/<int:template_id>', methods=['POST'])
+@login_required
+def use_template(template_id):
+    try:
+        template = models.ProjectTemplate.query.get_or_404(template_id)
+        
+        # Check if user has access to this template
+        if not template.is_public and template.user_id != current_user.id and current_user.role != 'admin':
+            flash('You do not have access to this template.', 'danger')
+            return redirect(url_for('project_templates'))
+        
+        # Create new project from template
+        project_title = request.form.get('title', template.name)
+        project_description = request.form.get('description', template.description)
+        
+        project = models.Project(
+            title=project_title,
+            description=project_description,
+            user_id=current_user.id,
+            created_at=datetime.datetime.utcnow()
+        )
+        
+        # Set task definition from template configuration
+        project.task_definition = template.configuration
+        
+        db.session.add(project)
+        
+        # Increment the template usage count
+        template.use_count += 1
+        
+        db.session.commit()
+        
+        flash(f'Project created from template "{template.name}".', 'success')
+        return redirect(url_for('project_detail', project_id=project.id))
+    except Exception as e:
+        flash(f'An error occurred: {str(e)}', 'danger')
+        logger.error(f"Error using template: {str(e)}")
+    
+    return redirect(url_for('project_templates'))
+
+@app.route('/edit_template/<int:template_id>', methods=['POST'])
+@login_required
+def edit_template(template_id):
+    try:
+        template = models.ProjectTemplate.query.get_or_404(template_id)
+        
+        # Check if user is authorized to edit this template
+        if template.user_id != current_user.id and current_user.role != 'admin':
+            flash('You do not have permission to edit this template.', 'danger')
+            return redirect(url_for('project_templates'))
+        
+        template.name = request.form.get('name')
+        template.description = request.form.get('description', '')
+        template.configuration = request.form.get('configuration', '{}')
+        template.is_public = 'is_public' in request.form
+        template.category = request.form.get('category', 'general')
+        
+        # Handle tags
+        tags = request.form.get('tags', '')
+        template.tags = json.dumps(tags.split(',')) if tags else '[]'
+        
+        db.session.commit()
+        
+        flash(f'Template "{template.name}" updated successfully.', 'success')
+    except Exception as e:
+        flash(f'An error occurred: {str(e)}', 'danger')
+        logger.error(f"Error updating template: {str(e)}")
+    
+    return redirect(url_for('project_templates'))
+
+@app.route('/delete_template/<int:template_id>', methods=['POST'])
+@login_required
+def delete_template(template_id):
+    try:
+        template = models.ProjectTemplate.query.get_or_404(template_id)
+        
+        # Check if user is authorized to delete this template
+        if template.user_id != current_user.id and current_user.role != 'admin':
+            flash('You do not have permission to delete this template.', 'danger')
+            return redirect(url_for('project_templates'))
+        
+        db.session.delete(template)
+        db.session.commit()
+        
+        flash('Template deleted successfully.', 'success')
+    except Exception as e:
+        flash(f'An error occurred: {str(e)}', 'danger')
+        logger.error(f"Error deleting template: {str(e)}")
+    
+    return redirect(url_for('project_templates'))
+
+@app.route('/team/<int:team_id>/add_project', methods=['POST'])
+@login_required
+def add_project_to_team(team_id):
+    team = models.Team.query.get_or_404(team_id)
+    
+    # Check if user is a member of the team
+    team_member = models.TeamMember.query.filter_by(team_id=team_id, user_id=current_user.id).first()
+    
+    if not team_member:
+        flash('You are not a member of this team.', 'danger')
+        return redirect(url_for('profile'))
+    
+    project_id = request.form.get('project_id')
+    
+    if not project_id:
+        flash('Project ID is required.', 'danger')
+        return redirect(url_for('team_detail', team_id=team_id))
+    
+    # Verify project exists and user owns it
+    project = models.Project.query.get_or_404(project_id)
+    
+    if project.user_id != current_user.id and current_user.role != 'admin':
+        flash('You do not have permission to share this project.', 'danger')
+        return redirect(url_for('team_detail', team_id=team_id))
+    
+    # Check if project is already added to the team
+    existing_team_project = models.TeamProject.query.filter_by(team_id=team_id, project_id=project_id).first()
+    
+    if existing_team_project:
+        flash('This project is already part of the team.', 'warning')
+        return redirect(url_for('team_detail', team_id=team_id))
+    
+    # Add project to team
+    team_project = models.TeamProject(
+        team_id=team_id,
+        project_id=project_id
+    )
+    db.session.add(team_project)
+    db.session.commit()
+    
+    flash('Project added to team successfully.', 'success')
+    return redirect(url_for('team_detail', team_id=team_id))
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
