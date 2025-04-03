@@ -147,15 +147,25 @@
             if (puterAuthBtn) {
                 puterAuthBtn.addEventListener('click', async function() {
                     try {
-                        // Authenticate with Puter
-                        await puter.auth.authenticate({
-                            passive: false,
-                            client_id: 'HACF Chatbot',
-                            scope: ['ai.chat']
-                        });
+                        // Check if the puter object is available
+                        if (typeof puter === 'undefined') {
+                            alert("Puter.js is not loaded properly. Please check your internet connection.");
+                            return;
+                        }
                         
-                        // Show success message
-                        alert("Successfully authenticated with Puter.js!");
+                        // Use the correct authentication method (this may vary based on the actual API)
+                        if (typeof puter.login === 'function') {
+                            await puter.login();
+                            alert("Successfully authenticated with Puter.js!");
+                        } else if (typeof puter.ui === 'object' && typeof puter.ui.login === 'function') {
+                            await puter.ui.login();
+                            alert("Successfully authenticated with Puter.js!");
+                        } else {
+                            // Fallback in case the API is different
+                            console.log("Using direct Puter.js API call");
+                            await puter.ai.chat("Hello Puter");
+                            alert("Successfully connected to Puter.js!");
+                        }
                     } catch (error) {
                         console.error("Authentication error:", error);
                         

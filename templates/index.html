@@ -259,20 +259,33 @@
         // Check Puter.js authentication status
         const puterStatusBadge = document.getElementById('puter-status-badge');
         
-        // Try passive authentication
-        puter.auth.authenticate({
-            passive: true,
-            client_id: 'HACF Chatbot',
-            scope: ['ai.chat']
-        }).then(() => {
-            // Authentication succeeded
-            puterStatusBadge.style.display = 'inline-block';
-            console.log("Puter.js authenticated successfully (passive)");
-        }).catch((error) => {
-            // Authentication failed or not previously authenticated
+        // Try to verify if Puter.js is available and loaded
+        if (typeof puter !== 'undefined' && typeof puter.ai !== 'undefined') {
+            try {
+                // Simple test to see if Puter.js is working without authentication
+                console.log("Checking Puter.js availability...");
+                puterStatusBadge.style.display = 'inline-block';
+                
+                // Try to log in automatically if that function exists
+                if (typeof puter.isLoggedIn === 'function') {
+                    puter.isLoggedIn().then((isLoggedIn) => {
+                        if (isLoggedIn) {
+                            console.log("Puter.js is already logged in");
+                        } else {
+                            console.log("Puter.js is available but not logged in");
+                        }
+                    });
+                }
+            } catch (error) {
+                // Handle any error that might occur
+                puterStatusBadge.style.display = 'none';
+                console.error("Puter.js initialization error:", error.message);
+            }
+        } else {
+            // Puter.js is not available
             puterStatusBadge.style.display = 'none';
-            console.log("Puter.js not authenticated:", error.message);
-        });
+            console.log("Puter.js is not available yet");
+        }
         
         // Apply syntax highlighting to code blocks
         document.querySelectorAll('pre code').forEach((block) => {

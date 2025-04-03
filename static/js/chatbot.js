@@ -135,7 +135,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 
             } else {
                 // Regular message - send to Puter.js AI
-                response = await puter.ai.chat(message);
+                if (typeof puter !== 'undefined' && typeof puter.ai !== 'undefined' && typeof puter.ai.chat === 'function') {
+                    response = await puter.ai.chat(message);
+                } else {
+                    // Fallback if Puter.js is not available
+                    response = "I'm sorry, but I can't access the AI service right now. Please check that you've authenticated with Puter.js by clicking the button in the navbar.";
+                }
             }
             
             // Hide typing indicator

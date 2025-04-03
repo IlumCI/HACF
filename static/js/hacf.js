@@ -147,7 +147,14 @@ async function defineTask() {
         }
         
         // Call Puter.js AI
-        const response = await puter.ai.chat(taskDescription);
+        let response;
+        if (typeof puter !== 'undefined' && typeof puter.ai !== 'undefined' && typeof puter.ai.chat === 'function') {
+            response = await puter.ai.chat(taskDescription);
+        } else {
+            // Fallback if Puter.js is not available
+            response = "I can't access the AI service right now. Please check that you've authenticated with Puter.js by clicking the button in the navbar.";
+            throw new Error("Puter.js AI is not available");
+        }
         document.getElementById('task-output').innerText = response;
         
         // Save this stage to the database
@@ -167,7 +174,14 @@ async function refineStructure(input) {
     
     try {
         const structurePrompt = `Refine the following plan into a technical roadmap with base code structure: ${input}`;
-        const response = await puter.ai.chat(structurePrompt);
+        let response;
+        if (typeof puter !== 'undefined' && typeof puter.ai !== 'undefined' && typeof puter.ai.chat === 'function') {
+            response = await puter.ai.chat(structurePrompt);
+        } else {
+            // Fallback if Puter.js is not available
+            response = "I can't access the AI service right now. Please check that you've authenticated with Puter.js.";
+            throw new Error("Puter.js AI is not available");
+        }
         document.getElementById('refine-output').innerText = response;
         
         // Save this stage to the database
