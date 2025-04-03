@@ -142,6 +142,48 @@ def profile():
     teams = models.TeamMember.query.filter_by(user_id=current_user.id).all()
     return render_template('profile.html', teams=teams)
 
+@app.route('/advanced_hacf')
+@login_required
+def advanced_hacf():
+    """
+    Display information about the advanced HACF framework including:
+    - Adaptive Layer Sequencing
+    - Cross-Layer Memory
+    - Proprietary Evaluation System
+    - Domain Specialization
+    - Human-AI Collaboration Checkpoints
+    """
+    # Get available domains for the domain specialization section
+    import advanced_hacf
+    domains = advanced_hacf.DomainSpecializationEngine.get_available_domains()
+    
+    # Get available networks for the adaptive sequencing section
+    networks = {
+        'standard': 'Linear progression through layers',
+        'agile': 'Flexible layer sequence with iterative development',
+        'research': 'Research-oriented with multiple exploration paths',
+        'security_focused': 'Security-focused with enhanced validation',
+        'iterative_development': 'Rapid iteration on development and optimization'
+    }
+    
+    # Memory types for the cross-layer memory section
+    memory_types = advanced_hacf.CrossLayerMemory.MEMORY_TYPES
+    
+    # Evaluation dimensions for the proprietary evaluation section
+    evaluation_dimensions = advanced_hacf.ProprietaryEvaluation.EVALUATION_DIMENSIONS
+    
+    # Checkpoint types for the human-AI collaboration section
+    checkpoint_types = advanced_hacf.HumanAICollaborationManager.CHECKPOINT_TYPES
+    
+    return render_template(
+        'advanced_hacf.html',
+        domains=domains,
+        networks=networks,
+        memory_types=memory_types,
+        evaluation_dimensions=evaluation_dimensions,
+        checkpoint_types=checkpoint_types
+    )
+
 @app.route('/dashboard')
 @login_required
 def dashboard():

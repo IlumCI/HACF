@@ -1,0 +1,208 @@
+{% extends 'base.html' %}
+
+{% block title %}Advanced HACF Framework{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="display-4">Advanced HACF Framework</h1>
+            <p class="lead">Hierarchical AI Collaboration Framework: Beyond Linear Progression</p>
+            <p>Our proprietary framework implements sophisticated AI collaboration that goes beyond the traditional linear progression model, creating a unique and valuable innovation.</p>
+        </div>
+    </div>
+
+    <!-- Key Framework Components -->
+    <div class="row mb-5">
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 bg-dark border-primary">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="card-title">Adaptive Layer Sequencing</h3>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">Dynamic progression through framework layers based on real-time feedback and project characteristics.</p>
+                    <h5>Layer Network Types:</h5>
+                    <ul class="list-group list-group-flush">
+                        {% for network_id, description in networks.items() %}
+                        <li class="list-group-item bg-dark text-light">
+                            <strong>{{ network_id|title }}</strong>: {{ description }}
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 bg-dark border-info">
+                <div class="card-header bg-info text-white">
+                    <h3 class="card-title">Cross-Layer Memory</h3>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">Sophisticated memory system that maintains context and insights across different HACF layers.</p>
+                    <h5>Memory Types:</h5>
+                    <ul class="list-group list-group-flush">
+                        {% for memory_type, memory_info in memory_types.items() %}
+                        <li class="list-group-item bg-dark text-light">
+                            <strong>{{ memory_type|title }}</strong>
+                            <span class="badge rounded-pill bg-{{ 'danger' if memory_info.priority == 'critical' else 'warning' if memory_info.priority == 'high' else 'info' if memory_info.priority == 'medium' else 'secondary' }} float-end">{{ memory_info.priority }}</span>
+                            <br>
+                            <small>{{ memory_info.description }}</small>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 bg-dark border-success">
+                <div class="card-header bg-success text-white">
+                    <h3 class="card-title">Proprietary Evaluation</h3>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">Unique evaluation system providing quantitative and qualitative assessment of each layer's performance.</p>
+                    <h5>Evaluation Dimensions:</h5>
+                    <ul class="list-group list-group-flush">
+                        {% for dim_id, dim_info in evaluation_dimensions.items() %}
+                        <li class="list-group-item bg-dark text-light">
+                            <strong>{{ dim_id|title }}</strong>
+                            <div class="progress mt-1" style="height: 8px;">
+                                <div class="progress-bar bg-success" role="progressbar" style="width: {{ dim_info.weight * 100 }}%"></div>
+                            </div>
+                            <small>{{ dim_info.description }}</small>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Domain Specialization Section -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="card bg-dark border-warning">
+                <div class="card-header bg-warning text-dark">
+                    <h3 class="card-title">Domain-Specific Layer Specialization</h3>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">Advanced industry-specific adjustments to HACF layers that optimize for particular domains.</p>
+
+                    <div class="row">
+                        {% for domain in domains %}
+                        <div class="col-md-4 mb-3">
+                            <div class="card h-100 bg-dark">
+                                <div class="card-header bg-dark border-warning text-light">
+                                    <h4 class="card-title">{{ domain.name }}</h4>
+                                </div>
+                                <div class="card-body">
+                                    <p>{{ domain.description }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Human-AI Collaboration Section -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="card bg-dark border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h3 class="card-title">Human-AI Collaboration Checkpoints</h3>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">Strategic intervention points where human expertise enhances the AI system, creating a truly collaborative framework.</p>
+
+                    <div class="row">
+                        {% for checkpoint_type, checkpoint_info in checkpoint_types.items() %}
+                        <div class="col-md-4 mb-3">
+                            <div class="card h-100 bg-dark">
+                                <div class="card-header bg-dark border-danger text-light">
+                                    <h4 class="card-title">{{ checkpoint_type|title }}</h4>
+                                    <span class="badge bg-secondary">~{{ checkpoint_info.average_time }} min</span>
+                                </div>
+                                <div class="card-body">
+                                    <p>{{ checkpoint_info.description }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Advantages Section -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="card bg-dark">
+                <div class="card-header bg-dark text-white">
+                    <h3 class="card-title">Advantages Over Traditional AI Frameworks</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="d-flex mb-3">
+                                <div class="flex-shrink-0">
+                                    <span class="display-5 text-primary">
+                                        <i class="bi bi-cpu"></i>
+                                    </span>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <h4>Adaptive Intelligence</h4>
+                                    <p>Dynamically adjusts processing paths based on project characteristics and real-time feedback.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex mb-3">
+                                <div class="flex-shrink-0">
+                                    <span class="display-5 text-success">
+                                        <i class="bi bi-building"></i>
+                                    </span>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <h4>Enterprise-Grade Specialization</h4>
+                                    <p>Customized behavior and evaluation for industry verticals like healthcare, finance, and retail.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex mb-3">
+                                <div class="flex-shrink-0">
+                                    <span class="display-5 text-info">
+                                        <i class="bi bi-braces"></i>
+                                    </span>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <h4>Cross-Layer Reasoning</h4>
+                                    <p>Maintains contextual memory across the entire project lifecycle, improving coherence and quality.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex mb-3">
+                                <div class="flex-shrink-0">
+                                    <span class="display-5 text-warning">
+                                        <i class="bi bi-people"></i>
+                                    </span>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <h4>Human-AI Synergy</h4>
+                                    <p>Designed for collaborative intelligence, not just automation, with strategic human checkpoints.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

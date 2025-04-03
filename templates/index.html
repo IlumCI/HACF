@@ -1,419 +1,143 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
 
-{% block head %}
-<style>
-    .chat-container {
-        max-height: 500px;
-        overflow-y: auto;
-        margin-bottom: 15px;
-        padding: 15px;
-        border-radius: 8px;
-        background-color: var(--bs-dark);
-    }
-    
-    .message {
-        padding: 10px 15px;
-        border-radius: 8px;
-        margin-bottom: 10px;
-        max-width: 80%;
-    }
-    
-    .user-message {
-        background-color: var(--bs-primary);
-        color: white;
-        margin-left: auto;
-    }
-    
-    .bot-message {
-        background-color: var(--bs-secondary);
-        margin-right: auto;
-    }
-    
-    .message-row {
-        display: flex;
-        margin-bottom: 10px;
-    }
-    
-    .typing-indicator {
-        display: inline-block;
-        padding: 10px 15px;
-        background-color: var(--bs-secondary);
-        border-radius: 8px;
-    }
-    
-    .typing-indicator span {
-        height: 10px;
-        width: 10px;
-        background-color: rgba(255, 255, 255, 0.7);
-        display: inline-block;
-        border-radius: 50%;
-        animation: typing 1s infinite ease-in-out;
-        margin: 0 2px;
-    }
-    
-    .typing-indicator span:nth-child(2) {
-        animation-delay: 0.2s;
-    }
-    
-    .typing-indicator span:nth-child(3) {
-        animation-delay: 0.4s;
-    }
-    
-    @keyframes typing {
-        0%, 100% {
-            transform: translateY(0);
-        }
-        50% {
-            transform: translateY(-5px);
-        }
-    }
-    
-    .hero-section {
-        padding: 3rem 0;
-        background: linear-gradient(135deg, #0d1117, #161b22);
-        border-radius: 10px;
-        margin-bottom: 2rem;
-    }
-    
-    .form-card {
-        border-radius: 10px;
-        overflow: hidden;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-        transition: all 0.3s ease;
-    }
-    
-    .form-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
-    }
-    
-    .form-header {
-        background: linear-gradient(135deg, #0d6efd, #0dcaf0);
-        padding: 1.5rem;
-        color: white;
-    }
-    
-    .tab-content {
-        padding: 2rem;
-    }
-    
-    .hacf-layer-badge {
-        display: inline-block;
-        width: 30px;
-        height: 30px;
-        border-radius: 50%;
-        color: white;
-        text-align: center;
-        line-height: 30px;
-        font-weight: bold;
-        margin-right: 10px;
-    }
-    
-    .layer-1-badge {
-        background-color: #0d6efd;  /* primary */
-    }
-    
-    .layer-2-badge {
-        background-color: #0dcaf0;  /* info */
-    }
-    
-    .layer-3-badge {
-        background-color: #198754;  /* success */
-    }
-    
-    .layer-4-badge {
-        background-color: #ffc107;  /* warning */
-        color: #212529;
-    }
-    
-    .layer-5-badge {
-        background-color: #dc3545;  /* danger */
-    }
-    
-    .hacf-steps .nav-link {
-        padding: 0.75rem 1rem;
-        border-radius: 0;
-        color: var(--bs-body-color);
-        position: relative;
-    }
-    
-    .hacf-steps .nav-link.active {
-        background-color: transparent;
-        color: var(--bs-primary);
-        font-weight: bold;
-    }
-    
-    .hacf-steps .nav-link.active::after {
-        content: '';
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        width: 100%;
-        height: 3px;
-        background-color: var(--bs-primary);
-    }
-    
-    .features-list {
-        margin: 0;
-        padding: 0;
-        list-style-type: none;
-    }
-    
-    .features-list li {
-        padding: 8px 0;
-        display: flex;
-        align-items: center;
-    }
-    
-    .features-list li::before {
-        content: '✓';
-        color: var(--bs-success);
-        font-weight: bold;
-        margin-right: 10px;
-    }
-</style>
-{% endblock %}
+{% block title %}Advanced HACF - Enterprise AI Collaboration{% endblock %}
 
 {% block content %}
-<!-- Hero Section -->
-<div class="hero-section text-center text-white">
-    <div class="container">
-        <h1 class="display-4 mb-3">Hierarchical AI Collaboration Framework</h1>
-        <p class="lead mb-4">Build powerful applications with a 5-layer AI framework that handles everything from task planning to final code deployment.</p>
-        <div class="row justify-content-center">
-            <div class="col-md-8">
-                <div class="d-flex justify-content-center">
-                    <span class="hacf-layer-badge layer-1-badge">1</span>
-                    <span class="hacf-layer-badge layer-2-badge">2</span>
-                    <span class="hacf-layer-badge layer-3-badge">3</span>
-                    <span class="hacf-layer-badge layer-4-badge">4</span>
-                    <span class="hacf-layer-badge layer-5-badge">5</span>
+<div class="container my-5">
+    <!-- Hero Section -->
+    <div class="row mb-5 align-items-center">
+        <div class="col-lg-6">
+            <h1 class="display-3 fw-bold mb-3">Hierarchical AI Collaboration Framework</h1>
+            <p class="lead mb-4">Our advanced enterprise-grade AI system leverages a proprietary framework to deliver superior results through dynamic collaboration and intelligent processing.</p>
+            <div class="d-grid gap-2 d-md-flex">
+                <a href="/dashboard" class="btn btn-primary btn-lg px-4 me-md-2">Get Started</a>
+                <a href="/advanced_hacf" class="btn btn-outline-secondary btn-lg px-4">Explore Framework</a>
+            </div>
+        </div>
+        <div class="col-lg-6 mt-5 mt-lg-0 text-center">
+            <!-- SVG Visualization of the HACF Process -->
+            <svg width="500" height="350" viewBox="0 0 500 350" class="img-fluid">
+                <!-- Background Circle -->
+                <circle cx="250" cy="175" r="150" fill="#2a2a2a" />
+                
+                <!-- Layer Circles -->
+                <circle cx="250" cy="90" r="35" fill="#6610f2" class="layer-1-circle" />
+                <circle cx="140" cy="175" r="35" fill="#0dcaf0" class="layer-2-circle" />
+                <circle cx="250" cy="260" r="35" fill="#198754" class="layer-3-circle" />
+                <circle cx="360" cy="175" r="35" fill="#ffc107" class="layer-4-circle" />
+                <circle cx="250" cy="175" r="35" fill="#dc3545" class="layer-5-circle" />
+                
+                <!-- Connection Lines -->
+                <path d="M226 109 L164 156" stroke="#6c757d" stroke-width="3" stroke-dasharray="5,5" />
+                <path d="M164 194 L226 241" stroke="#6c757d" stroke-width="3" stroke-dasharray="5,5" />
+                <path d="M274 241 L336 194" stroke="#6c757d" stroke-width="3" stroke-dasharray="5,5" />
+                <path d="M336 156 L274 109" stroke="#6c757d" stroke-width="3" stroke-dasharray="5,5" />
+                
+                <!-- Cross Connections -->
+                <path d="M226 109 L336 156" stroke="#0dcaf0" stroke-width="2" />
+                <path d="M164 194 L250 175" stroke="#198754" stroke-width="2" />
+                <path d="M250 260 L336 194" stroke="#dc3545" stroke-width="2" />
+                <path d="M274 109 L250 175" stroke="#ffc107" stroke-width="2" />
+                
+                <!-- Layer Labels -->
+                <text x="250" y="95" text-anchor="middle" fill="white" font-size="12">Layer 1</text>
+                <text x="140" y="180" text-anchor="middle" fill="black" font-size="12">Layer 2</text>
+                <text x="250" y="265" text-anchor="middle" fill="white" font-size="12">Layer 3</text>
+                <text x="360" y="180" text-anchor="middle" fill="black" font-size="12">Layer 4</text>
+                <text x="250" y="180" text-anchor="middle" fill="white" font-size="12">Layer 5</text>
+                
+                <!-- Memory Nodes -->
+                <circle cx="300" cy="135" r="8" fill="#0d6efd" />
+                <circle cx="200" cy="135" r="8" fill="#0d6efd" />
+                <circle cx="200" cy="215" r="8" fill="#0d6efd" />
+                <circle cx="300" cy="215" r="8" fill="#0d6efd" />
+            </svg>
+        </div>
+    </div>
+    
+    <!-- Features Section -->
+    <div class="row mb-5">
+        <div class="col-12 text-center mb-4">
+            <h2 class="display-5">Beyond Traditional AI Frameworks</h2>
+            <p class="lead">Our proprietary approach delivers superior results across the enterprise</p>
+        </div>
+        
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 bg-dark">
+                <div class="card-body">
+                    <div class="text-primary mb-3">
+                        <i class="bi bi-diagram-3 display-4"></i>
+                    </div>
+                    <h3 class="card-title">Adaptive Layer Sequencing</h3>
+                    <p class="card-text">Dynamic progression through framework layers based on feedback and project characteristics, creating unique development paths for each project.</p>
                 </div>
-                <div class="d-flex justify-content-between mt-2 text-white small">
-                    <span>Task Definition</span>
-                    <span>Refinement</span>
-                    <span>Development</span>
-                    <span>Optimization</span>
-                    <span>Final Output</span>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 bg-dark">
+                <div class="card-body">
+                    <div class="text-info mb-3">
+                        <i class="bi bi-database-check display-4"></i>
+                    </div>
+                    <h3 class="card-title">Cross-Layer Memory</h3>
+                    <p class="card-text">Sophisticated context retention system that maintains insights across different processing stages, ensuring coherent output and building on previous decisions.</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 bg-dark">
+                <div class="card-body">
+                    <div class="text-success mb-3">
+                        <i class="bi bi-building-check display-4"></i>
+                    </div>
+                    <h3 class="card-title">Domain Specialization</h3>
+                    <p class="card-text">Industry-specific adjustments that optimize for particular domains such as healthcare, finance, education, and retail, delivering tailored solutions.</p>
                 </div>
             </div>
         </div>
     </div>
-</div>
-
-<div class="row">
-    <!-- Simplified Project Builder Form -->
-    <div class="col-lg-7">
-        <div class="card form-card mb-4">
-            <div class="form-header">
-                <h3>Project Builder</h3>
-                <p class="mb-0">Describe your project and let HACF handle the rest</p>
-            </div>
-            <div class="card-body">
-                <form id="project-builder-form">
-                    <div class="mb-3">
-                        <label for="project-title" class="form-label">Project Title</label>
-                        <input type="text" class="form-control" id="project-title" placeholder="My Amazing Web App">
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="project-description" class="form-label">Project Description</label>
-                        <textarea class="form-control" id="project-description" rows="3" 
-                            placeholder="Describe what you want to build in detail. Include features, functionality, and any specific requirements."></textarea>
-                    </div>
-                    
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label for="project-type" class="form-label">Project Type</label>
-                            <select class="form-select" id="project-type">
-                                <option value="web-app">Web Application</option>
-                                <option value="mobile-app">Mobile App</option>
-                                <option value="desktop-app">Desktop Application</option>
-                                <option value="api">API / Backend Service</option>
-                                <option value="data-analysis">Data Analysis Tool</option>
-                                <option value="other">Other</option>
-                            </select>
+    
+    <!-- Stats Section -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="card bg-dark">
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-3 mb-3 mb-md-0">
+                            <h2 class="display-4 text-primary">60%</h2>
+                            <p class="lead">Faster Development</p>
                         </div>
-                        <div class="col-md-6">
-                            <label for="tech-stack" class="form-label">Preferred Technologies</label>
-                            <select class="form-select" id="tech-stack">
-                                <option value="auto">Auto-select Best Fit</option>
-                                <option value="js-react">JavaScript (React)</option>
-                                <option value="js-vue">JavaScript (Vue)</option>
-                                <option value="python-flask">Python (Flask)</option>
-                                <option value="python-django">Python (Django)</option>
-                                <option value="other">Other (specify in description)</option>
-                            </select>
+                        <div class="col-md-3 mb-3 mb-md-0">
+                            <h2 class="display-4 text-info">75%</h2>
+                            <p class="lead">Fewer Iterations</p>
                         </div>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label class="form-label d-block">Priority (select one)</label>
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="priority" id="priority-speed" value="speed" checked>
-                            <label class="form-check-label" for="priority-speed">Speed</label>
+                        <div class="col-md-3 mb-3 mb-md-0">
+                            <h2 class="display-4 text-success">90%</h2>
+                            <p class="lead">Quality Improvement</p>
                         </div>
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="priority" id="priority-quality" value="quality">
-                            <label class="form-check-label" for="priority-quality">Quality</label>
+                        <div class="col-md-3">
+                            <h2 class="display-4 text-warning">6+</h2>
+                            <p class="lead">Industry Domains</p>
                         </div>
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="priority" id="priority-security" value="security">
-                            <label class="form-check-label" for="priority-security">Security</label>
-                        </div>
-                    </div>
-                    
-                    <div class="d-grid gap-2">
-                        <button type="button" id="generate-project-btn" class="btn btn-primary btn-lg">Generate Project</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-        
-        <!-- HACF Process Steps -->
-        <div class="card mb-4">
-            <div class="card-header">
-                <h4>How It Works: The HACF Process</h4>
-            </div>
-            <div class="card-body">
-                <ul class="nav hacf-steps mb-3" id="hacf-process-tabs" role="tablist">
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link active" id="step1-tab" data-bs-toggle="tab" data-bs-target="#step1" type="button" role="tab" aria-controls="step1" aria-selected="true">
-                            <span class="hacf-layer-badge layer-1-badge">1</span> Task Definition
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="step2-tab" data-bs-toggle="tab" data-bs-target="#step2" type="button" role="tab" aria-controls="step2" aria-selected="false">
-                            <span class="hacf-layer-badge layer-2-badge">2</span> Refinement
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="step3-tab" data-bs-toggle="tab" data-bs-target="#step3" type="button" role="tab" aria-controls="step3" aria-selected="false">
-                            <span class="hacf-layer-badge layer-3-badge">3</span> Development
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="step4-tab" data-bs-toggle="tab" data-bs-target="#step4" type="button" role="tab" aria-controls="step4" aria-selected="false">
-                            <span class="hacf-layer-badge layer-4-badge">4</span> Optimization
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="step5-tab" data-bs-toggle="tab" data-bs-target="#step5" type="button" role="tab" aria-controls="step5" aria-selected="false">
-                            <span class="hacf-layer-badge layer-5-badge">5</span> Final Output
-                        </button>
-                    </li>
-                </ul>
-                <div class="tab-content" id="hacf-process-tab-content">
-                    <div class="tab-pane fade show active" id="step1" role="tabpanel" aria-labelledby="step1-tab">
-                        <h5>Task Definition & Planning Layer</h5>
-                        <p>Uses <strong>meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo</strong> to convert your project requirements into a structured plan.</p>
-                        <p>This layer analyzes your inputs and creates a detailed roadmap with clear features and objectives.</p>
-                    </div>
-                    <div class="tab-pane fade" id="step2" role="tabpanel" aria-labelledby="step2-tab">
-                        <h5>Refinement & Base Structure Layer</h5>
-                        <p>Uses <strong>deepseek-reasoner</strong> to convert the high-level plan into a technical specification.</p>
-                        <p>This layer selects optimal frameworks, libraries, and database structures for your project.</p>
-                    </div>
-                    <div class="tab-pane fade" id="step3" role="tabpanel" aria-labelledby="step3-tab">
-                        <h5>Development & Execution Layer</h5>
-                        <p>Uses <strong>codestral-latest</strong> or <strong>claude-3-7-sonnet</strong> to generate the actual code implementation.</p>
-                        <p>This layer creates working frontend and backend components based on the technical specification.</p>
-                    </div>
-                    <div class="tab-pane fade" id="step4" role="tabpanel" aria-labelledby="step4-tab">
-                        <h5>Debugging, Optimization & Security Layer</h5>
-                        <p>Uses <strong>gpt-4o</strong> to review, debug, and optimize the generated code.</p>
-                        <p>This layer ensures the code is secure, performant, and follows best practices.</p>
-                    </div>
-                    <div class="tab-pane fade" id="step5" role="tabpanel" aria-labelledby="step5-tab">
-                        <h5>Final Output Layer</h5>
-                        <p>Processes, formats, and prepares the final code for download.</p>
-                        <p>This layer packages everything into downloadable files ready for deployment.</p>
                     </div>
                 </div>
             </div>
         </div>
     </div>
     
-    <!-- Chat Interface -->
-    <div class="col-lg-5">
-        <div class="card mb-4">
-            <div class="card-header">
-                <h4>HACF Assistant</h4>
-            </div>
-            <div class="card-body">
-                <div class="chat-container" id="chat-container">
-                    <div class="message-row">
-                        <div class="message bot-message">
-                            Hello! I'm your AI assistant powered by the Hierarchical AI Collaboration Framework. I can help you build applications through our 5-layer process. How can I help you today?
-                        </div>
-                    </div>
-                    <!-- Chat messages will be added here dynamically -->
-                </div>
-                <div id="typing-indicator" class="message-row" style="display: none;">
-                    <div class="typing-indicator">
-                        <span></span>
-                        <span></span>
-                        <span></span>
-                    </div>
-                </div>
-                <div class="input-group">
-                    <input type="text" id="user-input" class="form-control" placeholder="Type your message...">
-                    <button class="btn btn-primary" id="send-btn">Send</button>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Features List -->
-        <div class="card">
-            <div class="card-header">
-                <h4>Key Features</h4>
-            </div>
-            <div class="card-body">
-                <ul class="features-list">
-                    <li>Multi-layer AI collaboration for optimized results</li>
-                    <li>Specialized AI models for each development stage</li>
-                    <li>Comprehensive project management dashboard</li>
-                    <li>Visual file explorer and code preview</li>
-                    <li>Multiple export options (ZIP, GitHub, JSON)</li>
-                    <li>Real-time code optimization and security checks</li>
-                    <li>Detailed analytics and progress tracking</li>
-                    <li>Collaborative project editing capabilities</li>
-                </ul>
-                <div class="d-grid gap-2 mt-3">
-                    <a href="/dashboard" class="btn btn-outline-primary">View Your Projects</a>
+    <!-- Call to Action -->
+    <div class="row mb-5">
+        <div class="col-12 text-center">
+            <div class="card bg-primary text-white">
+                <div class="card-body py-5">
+                    <h2 class="card-title mb-3">Ready to Transform Your AI Process?</h2>
+                    <p class="card-text lead mb-4">Experience the power of our proprietary framework today</p>
+                    <a href="/register" class="btn btn-light btn-lg">Get Started Now</a>
                 </div>
             </div>
         </div>
     </div>
 </div>
-
-<!-- Processing Modal -->
-<div class="modal fade" id="processing-modal" tabindex="-1" aria-labelledby="processing-modal-label" aria-hidden="true" data-bs-backdrop="static">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="processing-modal-label">Generating Your Project</h5>
-            </div>
-            <div class="modal-body text-center">
-                <div class="mb-3">
-                    <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">Loading...</span>
-                    </div>
-                </div>
-                <h5 id="current-layer-text">Layer 1: Task Definition & Planning</h5>
-                <div class="progress mb-3">
-                    <div id="progress-bar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 20%;" aria-valuenow="20" aria-valuemin="0" aria-valuemax="100">20%</div>
-                </div>
-                <p id="processing-status">Analyzing your project requirements...</p>
-                <p class="text-muted small">This may take a few minutes. Each layer of the HACF framework requires thorough processing to ensure high-quality results.</p>
-            </div>
-        </div>
-    </div>
-</div>
-{% endblock %}
-
-{% block scripts %}
-<script src="{{ url_for('static', filename='js/hacf.js') }}"></script>
-<script src="{{ url_for('static', filename='js/chatbot.js') }}"></script>
-<script src="{{ url_for('static', filename='js/project-builder.js') }}"></script>
 {% endblock %}

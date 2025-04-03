@@ -2,6 +2,8 @@ from app import db
 from datetime import datetime
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
+import json
+from typing import Dict, List, Any, Optional
 
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -300,3 +302,218 @@ class Integration(db.Model):
     
     def __repr__(self):
         return f'<Integration {self.provider}/{self.name}>'
+
+
+# Advanced HACF Framework Models
+
+class HACFSession(db.Model):
+    """
+    Tracks an active HACF processing session with enhanced framework features
+    """
+    id = db.Column(db.String(36), primary_key=True)  # UUID
+    project_id = db.Column(db.Integer, db.ForeignKey('project.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Current state
+    current_layer = db.Column(db.Integer, default=1)  # Current HACF layer being processed (1-5)
+    status = db.Column(db.String(20), default='active')  # active, paused, completed, failed
+    
+    # Adaptive sequencing
+    layer_sequence = db.Column(db.Text, nullable=True)  # JSON array of ordered layer numbers
+    sequence_rationale = db.Column(db.Text, nullable=True)  # Explanation for sequence decision
+    
+    # Domain specialization
+    domain = db.Column(db.String(50), nullable=True)  # Domain specialization applied (healthcare, finance, etc.)
+    industry = db.Column(db.String(50), nullable=True)  # Industry specialization
+    complexity_assessment = db.Column(db.Text, nullable=True)  # JSON complexity assessment
+    
+    # Timestamps for layer completion
+    layer1_started_at = db.Column(db.DateTime, nullable=True)
+    layer1_completed_at = db.Column(db.DateTime, nullable=True)
+    layer2_started_at = db.Column(db.DateTime, nullable=True)
+    layer2_completed_at = db.Column(db.DateTime, nullable=True)
+    layer3_started_at = db.Column(db.DateTime, nullable=True)
+    layer3_completed_at = db.Column(db.DateTime, nullable=True)
+    layer4_started_at = db.Column(db.DateTime, nullable=True)
+    layer4_completed_at = db.Column(db.DateTime, nullable=True)
+    layer5_started_at = db.Column(db.DateTime, nullable=True)
+    layer5_completed_at = db.Column(db.DateTime, nullable=True)
+    
+    # Relationships
+    checkpoints = db.relationship('HACFCheckpoint', backref='session', lazy=True)
+    memories = db.relationship('HACFMemory', backref='session', lazy=True)
+    evaluations = db.relationship('HACFEvaluation', backref='session', lazy=True)
+    
+    def __repr__(self):
+        return f'<HACFSession {self.id}>'
+    
+    @property
+    def layer_sequence_list(self) -> List[int]:
+        """Get the layer sequence as a Python list"""
+        if not self.layer_sequence:
+            return [1, 2, 3, 4, 5]  # Default sequence
+        try:
+            return json.loads(self.layer_sequence)
+        except:
+            return [1, 2, 3, 4, 5]
+    
+    @property
+    def next_layer(self) -> Optional[int]:
+        """Get the next layer in the sequence"""
+        sequence = self.layer_sequence_list
+        if self.current_layer in sequence:
+            idx = sequence.index(self.current_layer)
+            if idx < len(sequence) - 1:
+                return sequence[idx + 1]
+        return None
+    
+    @property
+    def progress_percentage(self) -> float:
+        """Calculate session progress percentage"""
+        sequence = self.layer_sequence_list
+        if not sequence:
+            return 0.0
+            
+        # Count completed layers in the sequence
+        completed_count = 0
+        for layer in sequence:
+            completed_at_attr = f'layer{layer}_completed_at'
+            if hasattr(self, completed_at_attr) and getattr(self, completed_at_attr) is not None:
+                completed_count += 1
+                
+        return (completed_count / len(sequence)) * 100
+
+
+class HACFMemory(db.Model):
+    """
+    Represents a memory entry in the cross-layer memory system
+    """
+    id = db.Column(db.String(36), primary_key=True)  # UUID
+    session_id = db.Column(db.String(36), db.ForeignKey('hacf_session.id'), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Memory content
+    source_layer = db.Column(db.Integer, nullable=False)  # Which layer created this memory
+    memory_type = db.Column(db.String(30), nullable=False)  # decision, constraint, insight, error, etc.
+    priority = db.Column(db.String(20), nullable=False)  # critical, high, medium, low
+    content = db.Column(db.Text, nullable=False)  # The actual memory content
+    memory_metadata = db.Column(db.Text, nullable=True)  # JSON metadata
+    
+    # Usage tracking
+    usage_count = db.Column(db.Integer, default=0)
+    last_accessed = db.Column(db.DateTime, nullable=True)
+    
+    def __repr__(self):
+        return f'<HACFMemory {self.id}>'
+    
+    @property
+    def metadata_dict(self) -> Dict[str, Any]:
+        """Get metadata as a Python dictionary"""
+        if not self.memory_metadata:
+            return {}
+        try:
+            return json.loads(self.memory_metadata)
+        except:
+            return {}
+
+
+class HACFCheckpoint(db.Model):
+    """
+    Represents a human-AI collaboration checkpoint during processing
+    """
+    id = db.Column(db.String(36), primary_key=True)  # UUID
+    session_id = db.Column(db.String(36), db.ForeignKey('hacf_session.id'), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Checkpoint information
+    layer = db.Column(db.Integer, nullable=False)  # Layer to which this checkpoint applies
+    checkpoint_type = db.Column(db.String(30), nullable=False)  # review, guidance, correction, etc.
+    name = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    position = db.Column(db.String(20), nullable=False)  # before, during, after
+    required_skills = db.Column(db.Text, nullable=True)  # JSON array of required skills
+    is_optional = db.Column(db.Boolean, default=True)
+    
+    # Status
+    status = db.Column(db.String(20), default='pending')  # pending, completed, skipped
+    completed_at = db.Column(db.DateTime, nullable=True)
+    completed_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    
+    # Feedback
+    feedback = db.Column(db.Text, nullable=True)  # JSON feedback data
+    feedback_processed = db.Column(db.Boolean, default=False)
+    
+    def __repr__(self):
+        return f'<HACFCheckpoint {self.id}>'
+    
+    @property
+    def required_skills_list(self) -> List[str]:
+        """Get required skills as a Python list"""
+        if not self.required_skills:
+            return []
+        try:
+            return json.loads(self.required_skills)
+        except:
+            return []
+    
+    @property
+    def feedback_dict(self) -> Dict[str, Any]:
+        """Get feedback as a Python dictionary"""
+        if not self.feedback:
+            return {}
+        try:
+            return json.loads(self.feedback)
+        except:
+            return {}
+
+
+class HACFEvaluation(db.Model):
+    """
+    Stores evaluation results for HACF layer outputs using proprietary metrics
+    """
+    id = db.Column(db.String(36), primary_key=True)  # UUID
+    session_id = db.Column(db.String(36), db.ForeignKey('hacf_session.id'), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Evaluation target
+    layer = db.Column(db.Integer, nullable=False)  # Layer being evaluated
+    output_id = db.Column(db.String(36), nullable=True)  # ID of output being evaluated (if applicable)
+    
+    # Overall scores
+    overall_score = db.Column(db.Float, nullable=False)  # Overall evaluation score (0.0-1.0)
+    dimension_scores = db.Column(db.Text, nullable=False)  # JSON of dimension scores
+    metric_scores = db.Column(db.Text, nullable=False)  # JSON of individual metric scores
+    
+    # Analysis
+    recommendations = db.Column(db.Text, nullable=True)  # JSON array of recommendations
+    strengths = db.Column(db.Text, nullable=True)  # JSON array of identified strengths
+    weaknesses = db.Column(db.Text, nullable=True)  # JSON array of identified weaknesses
+    
+    # Domain-specific evaluation
+    domain = db.Column(db.String(50), nullable=True)  # Domain for specialized evaluation
+    domain_specific_scores = db.Column(db.Text, nullable=True)  # JSON of domain-specific metrics
+    
+    def __repr__(self):
+        return f'<HACFEvaluation {self.id}>'
+    
+    @property
+    def dimension_scores_dict(self) -> Dict[str, float]:
+        """Get dimension scores as a Python dictionary"""
+        if not self.dimension_scores:
+            return {}
+        try:
+            return json.loads(self.dimension_scores)
+        except:
+            return {}
+    
+    @property
+    def recommendations_list(self) -> List[str]:
+        """Get recommendations as a Python list"""
+        if not self.recommendations:
+            return []
+        try:
+            return json.loads(self.recommendations)
+        except:
+            return []
