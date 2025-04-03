@@ -1,12 +1,28 @@
 from app import db
 from datetime import datetime
+from flask_login import UserMixin
+from werkzeug.security import generate_password_hash, check_password_hash
 
-class User(db.Model):
+class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(64), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(256))
     conversations = db.relationship('Conversation', backref='user', lazy=True)
+    projects = db.relationship('Project', backref='user', lazy=True)
+    
+    # Role-based access control fields
+    role = db.Column(db.String(20), default='user')  # 'user', 'admin', 'manager'
+    is_active = db.Column(db.Boolean, default=True)
+    last_login = db.Column(db.DateTime, nullable=True)
+    
+    def set_password(self, password):
+        """Set password hash"""
+        self.password_hash = generate_password_hash(password)
+        
+    def check_password(self, password):
+        """Check password against hash"""
+        return check_password_hash(self.password_hash, password)
     
     def __repr__(self):
         return f'<User {self.username}>'

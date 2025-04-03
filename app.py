@@ -2,9 +2,11 @@ import os
 import logging
 import json
 import datetime
-from flask import Flask, render_template, request, jsonify, session, redirect, url_for, send_file
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for, send_file, flash
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase
+from flask_login import LoginManager, login_user, logout_user, login_required, current_user
+from werkzeug.security import generate_password_hash, check_password_hash
 from io import BytesIO
 import zipfile
 
@@ -18,18 +20,30 @@ class Base(DeclarativeBase):
 db = SQLAlchemy(model_class=Base)
 # create the app
 app = Flask(__name__)
-app.secret_key = os.environ.get("SESSION_SECRET")
+app.secret_key = os.environ.get("SESSION_SECRET", "dev-secret-key")
 
-# Configure the SQLite database (can be replaced with proper database in production)
-app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL", "sqlite:///chatbot.db")
+# Configure the PostgreSQL database
+app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL")
 app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
     "pool_recycle": 300,
     "pool_pre_ping": True,
 }
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
-# initialize the app with the extension
+# Initialize Flask-Login
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'login'
+login_manager.login_message = 'Please log in to access this page.'
+
+# Initialize SQLAlchemy
 db.init_app(app)
+
+# User loader function for Flask-Login
+@login_manager.user_loader
+def load_user(user_id):
+    from models import User
+    return User.query.get(int(user_id))
 
 with app.app_context():
     # Make sure to import the models here
@@ -40,14 +54,112 @@ with app.app_context():
 def home():
     return render_template('index.html')
 
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    # If already logged in, redirect to dashboard
+    if current_user.is_authenticated:
+        return redirect(url_for('dashboard'))
+    
+    if request.method == 'POST':
+        email = request.form.get('email')
+        password = request.form.get('password')
+        
+        if not email or not password:
+            flash('Please fill out all fields.', 'danger')
+            return render_template('login.html')
+        
+        user = models.User.query.filter_by(email=email).first()
+        
+        if user and user.check_password(password):
+            login_user(user)
+            user.last_login = datetime.datetime.utcnow()
+            db.session.commit()
+            
+            # Redirect to requested page or dashboard
+            next_page = request.args.get('next')
+            return redirect(next_page if next_page else url_for('dashboard'))
+        else:
+            flash('Invalid email or password.', 'danger')
+    
+    return render_template('login.html')
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    # If already logged in, redirect to dashboard
+    if current_user.is_authenticated:
+        return redirect(url_for('dashboard'))
+    
+    if request.method == 'POST':
+        username = request.form.get('username')
+        email = request.form.get('email')
+        password = request.form.get('password')
+        confirm_password = request.form.get('confirm_password')
+        
+        if not username or not email or not password:
+            flash('Please fill out all fields.', 'danger')
+            return render_template('register.html')
+        
+        if password != confirm_password:
+            flash('Passwords do not match.', 'danger')
+            return render_template('register.html')
+        
+        # Check if email or username already exists
+        if models.User.query.filter_by(email=email).first():
+            flash('Email already registered.', 'danger')
+            return render_template('register.html')
+        
+        if models.User.query.filter_by(username=username).first():
+            flash('Username already taken.', 'danger')
+            return render_template('register.html')
+        
+        # Create new user
+        user = models.User(username=username, email=email)
+        user.set_password(password)
+        
+        # First user gets admin privileges
+        if models.User.query.count() == 0:
+            user.role = 'admin'
+        
+        db.session.add(user)
+        db.session.commit()
+        
+        flash('Registration successful. Please log in.', 'success')
+        return redirect(url_for('login'))
+    
+    return render_template('register.html')
+
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    flash('You have been logged out.', 'info')
+    return redirect(url_for('home'))
+
+@app.route('/profile')
+@login_required
+def profile():
+    return render_template('profile.html')
+
 @app.route('/dashboard')
+@login_required
 def dashboard():
-    # Fetch all projects
-    projects = models.Project.query.all()
+    # Fetch all projects for the current user
+    if current_user.role == 'admin':
+        # Admins can see all projects
+        projects = models.Project.query.all()
+    else:
+        # Regular users only see their own projects
+        projects = models.Project.query.filter_by(user_id=current_user.id).all()
     return render_template('dashboard.html', projects=projects)
 
 @app.route('/analytics')
+@login_required
 def analytics():
+    # Restrict analytics to admins and managers
+    if current_user.role not in ['admin', 'manager']:
+        flash('You do not have permission to access analytics.', 'danger')
+        return redirect(url_for('dashboard'))
+    
     # Get basic stats
     projects = models.Project.query.all()
     completed_projects = models.Project.query.filter_by(layer5_complete=True).count()
@@ -141,8 +253,14 @@ def analytics():
     )
 
 @app.route('/project/<int:project_id>')
+@login_required
 def project_detail(project_id):
     project = models.Project.query.get_or_404(project_id)
+    
+    # Check if user is authorized to view this project
+    if not current_user.role == 'admin' and project.user_id != current_user.id:
+        flash('You do not have permission to view this project.', 'danger')
+        return redirect(url_for('dashboard'))
     
     # Determine the active layer
     active_layer = 1
@@ -169,6 +287,7 @@ def project_detail(project_id):
     return render_template('project_detail.html', project=project, active_layer=active_layer)
 
 @app.route('/create_project', methods=['POST'])
+@login_required
 def create_project():
     # Handle both form data and JSON data
     if request.is_json:
@@ -195,10 +314,11 @@ def create_project():
             # Flash an error message
             return redirect(url_for('dashboard'))
     
-    # Create new project
+    # Create new project and associate with current user
     project = models.Project(
         title=title,
         description=description,
+        user_id=current_user.id,
         created_at=datetime.datetime.utcnow()
     )
     
@@ -223,8 +343,14 @@ def create_project():
         return redirect(url_for('project_detail', project_id=project.id))
 
 @app.route('/edit_project/<int:project_id>', methods=['GET', 'POST'])
+@login_required
 def edit_project(project_id):
     project = models.Project.query.get_or_404(project_id)
+    
+    # Check if user is authorized to edit this project
+    if not current_user.role == 'admin' and project.user_id != current_user.id:
+        flash('You do not have permission to edit this project.', 'danger')
+        return redirect(url_for('dashboard'))
     
     if request.method == 'POST':
         project.title = request.form.get('title')
@@ -236,17 +362,32 @@ def edit_project(project_id):
     return render_template('edit_project.html', project=project)
 
 @app.route('/delete_project/<int:project_id>', methods=['POST'])
+@login_required
 def delete_project(project_id):
     project = models.Project.query.get_or_404(project_id)
+    
+    # Check if user is authorized to delete this project
+    if not current_user.role == 'admin' and project.user_id != current_user.id:
+        flash('You do not have permission to delete this project.', 'danger')
+        return redirect(url_for('dashboard'))
     
     db.session.delete(project)
     db.session.commit()
     
+    flash('Project deleted successfully.', 'success')
     return redirect(url_for('dashboard'))
 
 @app.route('/process_layer/<int:project_id>/<int:layer_num>', methods=['POST'])
+@login_required
 def process_layer(project_id, layer_num):
     project = models.Project.query.get_or_404(project_id)
+    
+    # Check if user is authorized to process this project
+    if not current_user.role == 'admin' and project.user_id != current_user.id:
+        return jsonify({
+            "status": "error",
+            "message": "You do not have permission to process this project."
+        }), 403
     data = request.json or {}
     input_data = data.get('input', '')
     
@@ -295,8 +436,13 @@ def process_layer(project_id, layer_num):
         }), 500
 
 @app.route('/project_file/<int:project_id>/<path:filename>')
+@login_required
 def project_file(project_id, filename):
     project = models.Project.query.get_or_404(project_id)
+    
+    # Check if user is authorized to access this project's files
+    if not current_user.role == 'admin' and project.user_id != current_user.id:
+        return "Access denied", 403
     
     if not project.files:
         return "File not found", 404
@@ -312,8 +458,13 @@ def project_file(project_id, filename):
         return "Error retrieving file", 500
 
 @app.route('/project_zip/<int:project_id>')
+@login_required
 def project_zip(project_id):
     project = models.Project.query.get_or_404(project_id)
+    
+    # Check if user is authorized to download this project's files
+    if not current_user.role == 'admin' and project.user_id != current_user.id:
+        return "Access denied", 403
     
     if not project.files:
         return "No files to download", 404
@@ -338,8 +489,16 @@ def project_zip(project_id):
         return "Error creating ZIP file", 500
 
 @app.route('/project_json/<int:project_id>')
+@login_required
 def project_json(project_id):
     project = models.Project.query.get_or_404(project_id)
+    
+    # Check if user is authorized to access this project's data
+    if not current_user.role == 'admin' and project.user_id != current_user.id:
+        return jsonify({
+            "status": "error",
+            "message": "Access denied"
+        }), 403
     
     # Create a JSON representation of the project
     project_data = {
@@ -360,6 +519,7 @@ def project_json(project_id):
     return jsonify(project_data)
 
 @app.route('/chat', methods=['POST'])
+@login_required
 def chat():
     try:
         data = request.json
@@ -401,6 +561,7 @@ def chat():
         }), 500
 
 @app.route('/get_conversation', methods=['GET'])
+@login_required
 def get_conversation():
     conversation = session.get('conversation', [])
     return jsonify({
@@ -408,6 +569,7 @@ def get_conversation():
     })
 
 @app.route('/clear_conversation', methods=['POST'])
+@login_required
 def clear_conversation():
     if 'conversation' in session:
         session.pop('conversation')
