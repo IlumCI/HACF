@@ -1,237 +1,515 @@
 import os
+import re
+import time
 import json
 import logging
 import hashlib
 import secrets
 import datetime
 import ipaddress
-from functools import wraps
+from typing import List, Dict, Any, Optional, Tuple
 
-from flask import request, redirect, url_for, flash, abort, session, g, current_app
+from flask import request, abort, current_app, g, session
+from werkzeug.security import generate_password_hash, check_password_hash
+from functools import wraps
 from flask_login import current_user
 
-from models import User
 from app import db
+from models import User
 
 # Configure logging
 logger = logging.getLogger(__name__)
 
 class SecurityManager:
-    """Manages security features like 2FA, rate limiting, and audit logging"""
+    """Manages security features and enhancements"""
     
-    # Rate limiting settings
-    RATE_LIMITS = {
-        'login': {'count': 5, 'period': 300},  # 5 attempts per 5 minutes
-        'register': {'count': 3, 'period': 3600},  # 3 attempts per hour
-        'api': {'count': 100, 'period': 3600},  # 100 requests per hour
-        'password_reset': {'count': 3, 'period': 86400}  # 3 attempts per day
-    }
+    # Authentication constants
+    TOKEN_EXPIRY = 3600  # 1 hour
+    FAILED_LOGIN_LIMIT = 5
+    FAILED_LOGIN_WINDOW = 900  # 15 minutes
+    PASSWORD_RESET_EXPIRY = 86400  # 24 hours
     
-    # IP access control
-    IP_WHITELIST = []
-    IP_BLACKLIST = []
+    # CSRF tokens
+    _csrf_tokens = {}
+    _csrf_token_expiry = {}
     
-    @classmethod
-    def setup(cls):
-        """Initialize security settings from environment or config"""
-        # Load IP whitelists/blacklists from environment
-        whitelist = os.environ.get('IP_WHITELIST', '')
-        blacklist = os.environ.get('IP_BLACKLIST', '')
-        
-        if whitelist:
-            cls.IP_WHITELIST = [ip.strip() for ip in whitelist.split(',')]
-        
-        if blacklist:
-            cls.IP_BLACKLIST = [ip.strip() for ip in blacklist.split(',')]
+    # Rate limiting
+    _request_counts = {}
+    _ip_blocklist = set()
     
-    @classmethod
-    def check_ip_access(cls, ip_address):
-        """Check if an IP address is allowed to access the application"""
-        # If whitelist is defined, only allow IPs on the whitelist
-        if cls.IP_WHITELIST:
-            return cls._ip_in_list(ip_address, cls.IP_WHITELIST)
+    # Failed login attempts
+    _failed_logins = {}
+    
+    @staticmethod
+    def hash_password(password: str) -> str:
+        """Hash a password for storage"""
+        return generate_password_hash(password)
+    
+    @staticmethod
+    def check_password(hashed_password: str, password: str) -> bool:
+        """Check if a password matches its hash"""
+        return check_password_hash(hashed_password, password)
+    
+    @staticmethod
+    def validate_password_strength(password: str) -> Tuple[bool, str]:
+        """Validate password meets strength requirements"""
+        if len(password) < 8:
+            return False, "Password must be at least 8 characters long"
         
-        # If no whitelist but blacklist exists, block IPs on the blacklist
-        if cls.IP_BLACKLIST:
-            return not cls._ip_in_list(ip_address, cls.IP_BLACKLIST)
+        # Check for complexity requirements
+        has_upper = any(c.isupper() for c in password)
+        has_lower = any(c.islower() for c in password)
+        has_digit = any(c.isdigit() for c in password)
+        has_special = any(not c.isalnum() for c in password)
         
-        # If no lists defined, allow all
+        if not (has_upper and has_lower and has_digit):
+            return False, "Password must contain at least one uppercase letter, one lowercase letter, and one digit"
+        
+        if not has_special:
+            return False, "Password must contain at least one special character"
+        
+        # Check for common passwords (simplified - would use a proper list in production)
+        common_passwords = ['password', 'password123', '12345678', 'qwerty123']
+        if password.lower() in common_passwords:
+            return False, "Password is too common"
+        
+        return True, "Password meets strength requirements"
+    
+    @staticmethod
+    def generate_token() -> str:
+        """Generate a secure random token"""
+        return secrets.token_urlsafe(32)
+    
+    @staticmethod
+    def generate_csrf_token(session_id: str) -> str:
+        """Generate a CSRF token for a session"""
+        token = secrets.token_urlsafe(32)
+        
+        SecurityManager._csrf_tokens[session_id] = token
+        SecurityManager._csrf_token_expiry[session_id] = time.time() + 3600  # 1 hour
+        
+        return token
+    
+    @staticmethod
+    def verify_csrf_token(session_id: str, token: str) -> bool:
+        """Verify a CSRF token is valid for a session"""
+        if session_id not in SecurityManager._csrf_tokens:
+            return False
+        
+        if session_id in SecurityManager._csrf_token_expiry and SecurityManager._csrf_token_expiry[session_id] < time.time():
+            # Token expired, remove it
+            del SecurityManager._csrf_tokens[session_id]
+            del SecurityManager._csrf_token_expiry[session_id]
+            return False
+        
+        return SecurityManager._csrf_tokens[session_id] == token
+    
+    @staticmethod
+    def validate_input(input_data: Dict[str, Any], rules: Dict[str, Dict[str, Any]]) -> Tuple[bool, Dict[str, str]]:
+        """
+        Validate input data against a set of rules
+        
+        Example rules:
+        {
+            'username': {
+                'required': True,
+                'type': 'string',
+                'min_length': 3,
+                'max_length': 30,
+                'pattern': r'^[a-zA-Z0-9_]+$'
+            },
+            'email': {
+                'required': True,
+                'type': 'email'
+            }
+        }
+        """
+        errors = {}
+        
+        for field, rule in rules.items():
+            # Check if field is required but missing
+            if rule.get('required', False) and (field not in input_data or input_data[field] is None):
+                errors[field] = f"{field} is required"
+                continue
+            
+            # Skip validation if field is not present
+            if field not in input_data or input_data[field] is None:
+                continue
+            
+            value = input_data[field]
+            
+            # Type validation
+            field_type = rule.get('type', 'string')
+            if field_type == 'string':
+                if not isinstance(value, str):
+                    errors[field] = f"{field} must be a string"
+                    continue
+                
+                # String length validation
+                min_length = rule.get('min_length')
+                if min_length is not None and len(value) < min_length:
+                    errors[field] = f"{field} must be at least {min_length} characters"
+                    continue
+                
+                max_length = rule.get('max_length')
+                if max_length is not None and len(value) > max_length:
+                    errors[field] = f"{field} must be at most {max_length} characters"
+                    continue
+                
+                # Pattern validation
+                pattern = rule.get('pattern')
+                if pattern and not re.match(pattern, value):
+                    errors[field] = f"{field} has an invalid format"
+                    continue
+            
+            elif field_type == 'email':
+                if not isinstance(value, str):
+                    errors[field] = f"{field} must be a string"
+                    continue
+                
+                # Basic email validation - production would use proper regex or libraries
+                if '@' not in value or '.' not in value:
+                    errors[field] = f"{field} must be a valid email address"
+                    continue
+            
+            elif field_type == 'number':
+                if not isinstance(value, (int, float)):
+                    errors[field] = f"{field} must be a number"
+                    continue
+                
+                # Number range validation
+                min_value = rule.get('min_value')
+                if min_value is not None and value < min_value:
+                    errors[field] = f"{field} must be at least {min_value}"
+                    continue
+                
+                max_value = rule.get('max_value')
+                if max_value is not None and value > max_value:
+                    errors[field] = f"{field} must be at most {max_value}"
+                    continue
+            
+            elif field_type == 'boolean':
+                if not isinstance(value, bool):
+                    errors[field] = f"{field} must be a boolean"
+                    continue
+            
+            elif field_type == 'date':
+                if not isinstance(value, str):
+                    errors[field] = f"{field} must be a string"
+                    continue
+                
+                # Date validation - would use proper validation in production
+                try:
+                    datetime.datetime.fromisoformat(value)
+                except ValueError:
+                    errors[field] = f"{field} must be a valid date in ISO format"
+                    continue
+        
+        return len(errors) == 0, errors
+    
+    @staticmethod
+    def sanitize_html(html: str) -> str:
+        """
+        Sanitize HTML to prevent XSS attacks
+        In a production system, this would use a library like bleach
+        """
+        # Very basic implementation - would use a proper library in production
+        # Replace script tags
+        html = html.replace('<script', '&lt;script')
+        html = html.replace('</script>', '&lt;/script&gt;')
+        
+        # Replace on* event handlers
+        import re
+        html = re.sub(r'on\w+\s*=\s*["\'][^"\']*["\']', '', html, flags=re.IGNORECASE)
+        
+        return html
+    
+    @staticmethod
+    def sanitize_input(data: Dict[str, Any], sanitize_fields: List[str]) -> Dict[str, Any]:
+        """Sanitize specific fields in input data"""
+        sanitized = data.copy()
+        
+        for field in sanitize_fields:
+            if field in sanitized and isinstance(sanitized[field], str):
+                sanitized[field] = SecurityManager.sanitize_html(sanitized[field])
+        
+        return sanitized
+    
+    @staticmethod
+    def rate_limit(ip_address: str, limit: int = 60, window: int = 60) -> bool:
+        """
+        Rate limit requests by IP address
+        Returns True if rate limit is not exceeded, False otherwise
+        """
+        now = time.time()
+        key = f"{ip_address}:{int(now / window)}"
+        
+        # Check if IP is blocklisted
+        if ip_address in SecurityManager._ip_blocklist:
+            return False
+        
+        # Update request count
+        if key in SecurityManager._request_counts:
+            SecurityManager._request_counts[key] += 1
+        else:
+            SecurityManager._request_counts[key] = 1
+        
+        # Check if limit is exceeded
+        if SecurityManager._request_counts[key] > limit:
+            # Add to blocklist for temporary period if rate limit far exceeded
+            if SecurityManager._request_counts[key] > limit * 2:
+                SecurityManager._ip_blocklist.add(ip_address)
+                
+                # Schedule removal from blocklist after 1 hour
+                def remove_from_blocklist():
+                    time.sleep(3600)
+                    if ip_address in SecurityManager._ip_blocklist:
+                        SecurityManager._ip_blocklist.remove(ip_address)
+                
+                import threading
+                thread = threading.Thread(target=remove_from_blocklist)
+                thread.daemon = True
+                thread.start()
+            
+            return False
+        
         return True
     
-    @classmethod
-    def _ip_in_list(cls, ip_address, ip_list):
-        """Check if an IP address is in a list of IPs or CIDR ranges"""
-        try:
-            ip_obj = ipaddress.ip_address(ip_address)
-            
-            for ip_entry in ip_list:
-                # Check if entry is a CIDR range
-                if '/' in ip_entry:
-                    network = ipaddress.ip_network(ip_entry, strict=False)
-                    if ip_obj in network:
-                        return True
-                # Check for exact match
-                elif ip_address == ip_entry:
-                    return True
-            
-            return False
-        except ValueError:
-            logger.error(f"Invalid IP address format: {ip_address}")
-            return False
-    
-    @classmethod
-    def rate_limit_check(cls, key, identifier):
+    @staticmethod
+    def record_failed_login(username: str, ip_address: str) -> bool:
         """
-        Check if a rate limit has been exceeded
-        key: The type of rate limit (login, register, etc.)
-        identifier: Unique identifier (IP, user_id, etc.)
-        
-        Returns: (allowed, remaining, reset_time)
+        Record a failed login attempt
+        Returns True if account should be temporarily locked
         """
-        if key not in cls.RATE_LIMITS:
-            return True, None, None
+        now = time.time()
+        key = f"{username}:{ip_address}"
         
-        limit = cls.RATE_LIMITS[key]
-        rate_limit_key = f"rate_limit:{key}:{identifier}"
-        
-        # Get current tracking data from session or initialize
-        now = datetime.datetime.utcnow()
-        rate_data = session.get(rate_limit_key, {
-            'count': 0,
-            'reset_time': (now + datetime.timedelta(seconds=limit['period'])).timestamp()
-        })
-        
-        # Check if we need to reset the counter
-        if now.timestamp() > rate_data['reset_time']:
-            rate_data = {
-                'count': 0,
-                'reset_time': (now + datetime.timedelta(seconds=limit['period'])).timestamp()
+        # Initialize or update failed login count
+        if key in SecurityManager._failed_logins:
+            # Check if window has expired
+            if now - SecurityManager._failed_logins[key]['first_attempt'] > SecurityManager.FAILED_LOGIN_WINDOW:
+                # Reset if window expired
+                SecurityManager._failed_logins[key] = {
+                    'count': 1,
+                    'first_attempt': now,
+                    'last_attempt': now
+                }
+            else:
+                # Increment count
+                SecurityManager._failed_logins[key]['count'] += 1
+                SecurityManager._failed_logins[key]['last_attempt'] = now
+        else:
+            # First failed attempt
+            SecurityManager._failed_logins[key] = {
+                'count': 1,
+                'first_attempt': now,
+                'last_attempt': now
             }
         
         # Check if limit exceeded
-        allowed = rate_data['count'] < limit['count']
-        remaining = limit['count'] - rate_data['count']
-        reset_time = datetime.datetime.fromtimestamp(rate_data['reset_time'])
-        
-        # Increment counter if not in testing mode
-        if allowed and not current_app.testing:
-            rate_data['count'] += 1
-            session[rate_limit_key] = rate_data
-        
-        return allowed, remaining, reset_time
+        return SecurityManager._failed_logins[key]['count'] >= SecurityManager.FAILED_LOGIN_LIMIT
     
-    @classmethod
-    def check_rate_limit(cls, key):
-        """Decorator for rate-limited routes"""
-        def decorator(f):
-            @wraps(f)
-            def decorated_function(*args, **kwargs):
-                identifier = request.remote_addr
-                allowed, remaining, reset_time = cls.rate_limit_check(key, identifier)
-                
-                if not allowed:
-                    logger.warning(f"Rate limit exceeded for {key} by {identifier}")
-                    flash(f"Too many attempts. Please try again after {reset_time.strftime('%H:%M:%S')}.", "danger")
-                    return redirect(url_for('home'))
-                
-                return f(*args, **kwargs)
-            return decorated_function
-        return decorator
-    
-    @classmethod
-    def create_audit_log(cls, user_id, action, resource_type=None, resource_id=None, details=None, status='success'):
-        """
-        Create an audit log entry
-        In a real implementation, this would save to a database table
-        """
-        log_entry = {
-            'timestamp': datetime.datetime.utcnow().isoformat(),
-            'user_id': user_id,
-            'action': action,
-            'resource_type': resource_type,
-            'resource_id': resource_id,
-            'ip_address': request.remote_addr,
-            'user_agent': request.user_agent.string if hasattr(request, 'user_agent') else None,
-            'details': details,
-            'status': status
-        }
+    @staticmethod
+    def is_account_locked(username: str, ip_address: str) -> bool:
+        """Check if an account is temporarily locked due to failed login attempts"""
+        now = time.time()
+        key = f"{username}:{ip_address}"
         
-        logger.info(f"AUDIT: {json.dumps(log_entry)}")
-        return log_entry
+        if key not in SecurityManager._failed_logins:
+            return False
+        
+        login_info = SecurityManager._failed_logins[key]
+        
+        # Check if window has expired
+        if now - login_info['first_attempt'] > SecurityManager.FAILED_LOGIN_WINDOW:
+            # Window expired, remove record
+            del SecurityManager._failed_logins[key]
+            return False
+        
+        # Check if limit exceeded
+        return login_info['count'] >= SecurityManager.FAILED_LOGIN_LIMIT
     
-    @classmethod
-    def require_2fa(cls, f):
-        """Decorator to require 2FA for a route"""
+    @staticmethod
+    def reset_failed_logins(username: str, ip_address: str) -> None:
+        """Reset failed login attempts after successful login"""
+        key = f"{username}:{ip_address}"
+        
+        if key in SecurityManager._failed_logins:
+            del SecurityManager._failed_logins[key]
+    
+    @staticmethod
+    def check_ip_risk(ip_address: str) -> Dict[str, Any]:
+        """Check if an IP address is potentially risky"""
+        try:
+            ip = ipaddress.ip_address(ip_address)
+            
+            # Check if private address
+            if ip.is_private:
+                return {'risk': 'low', 'reason': 'Private IP address'}
+            
+            # Check if loopback
+            if ip.is_loopback:
+                return {'risk': 'low', 'reason': 'Loopback address'}
+            
+            # Check for known VPN/Proxy exit points
+            # In a real system, this would check against a database of known exits
+            
+            # Placeholder for demonstration
+            return {'risk': 'unknown', 'reason': 'No risk factors identified'}
+            
+        except ValueError:
+            return {'risk': 'high', 'reason': 'Invalid IP address format'}
+
+# Decorators for endpoint security
+
+def csrf_protected(f):
+    """Decorator to require CSRF token verification"""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        # Only check POST/PUT/DELETE requests
+        if request.method in ['POST', 'PUT', 'DELETE']:
+            token = request.form.get('csrf_token')
+            if not token or not SecurityManager.verify_csrf_token(session.get('id'), token):
+                abort(403)
+        return f(*args, **kwargs)
+    return decorated_function
+
+def rate_limited(limit=60, window=60):
+    """Decorator to apply rate limiting to an endpoint"""
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            ip = request.remote_addr
+            if not SecurityManager.rate_limit(ip, limit, window):
+                abort(429)
+            return f(*args, **kwargs)
+        return decorated_function
+    return decorator
+
+def admin_required(f):
+    """Decorator to restrict access to admin users"""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not current_user.is_authenticated or current_user.role != 'admin':
+            abort(403)
+        return f(*args, **kwargs)
+    return decorated_function
+
+def require_permission(permission):
+    """Decorator to require a specific permission"""
+    def decorator(f):
         @wraps(f)
         def decorated_function(*args, **kwargs):
             if not current_user.is_authenticated:
-                return redirect(url_for('login'))
+                abort(403)
             
-            # Check if user has 2FA enabled and verified for this session
-            if current_user.has_2fa and not session.get('2fa_verified'):
-                # Store the original URL for redirection after 2FA
-                session['next'] = request.url
-                return redirect(url_for('verify_2fa'))
-            
+            # Check if user has permission
+            user_permissions = current_user.get_permissions()
+            if permission not in user_permissions:
+                abort(403)
             return f(*args, **kwargs)
         return decorated_function
-    
-    @classmethod
-    def generate_totp_secret(cls):
-        """Generate a new TOTP secret for 2FA"""
-        return secrets.token_hex(20)
-    
-    @classmethod
-    def validate_totp(cls, secret, token):
-        """
-        Validate a TOTP token
-        This is a placeholder that would use a library like pyotp in a real implementation
-        """
-        # In a real implementation:
-        # import pyotp
-        # totp = pyotp.TOTP(secret)
-        # return totp.verify(token)
-        
-        # For demo purposes, just check if token is '123456'
-        return token == '123456'
+    return decorator
 
-# Middleware function to apply security checks
-def security_middleware():
-    """Apply security checks and headers to all requests"""
-    # Skip checks for static files
-    if request.path.startswith('/static/'):
-        return
+# Flask request handlers
+
+def before_request_security():
+    """Security checks to run before each request"""
+    # Rate limiting
+    ip = request.remote_addr
+    if not SecurityManager.rate_limit(ip):
+        abort(429)
     
-    # Check IP access
-    if not SecurityManager.check_ip_access(request.remote_addr):
-        abort(403, description="Your IP address is not allowed to access this application.")
+    # Add CSRF token to template context
+    if 'id' in session:
+        g.csrf_token = SecurityManager.generate_csrf_token(session['id'])
     
-    # Set security headers
-    response = current_app.make_default_response()
-    response.headers['Content-Security-Policy'] = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdn.replit.com; img-src 'self' data: https:; font-src 'self' data: https:;"
+    # Security headers will be set in after_request
+
+def after_request_security(response):
+    """Add security headers to responses"""
+    # Content Security Policy
+    response.headers['Content-Security-Policy'] = "default-src 'self'; script-src 'self'; object-src 'none'; frame-ancestors 'none'"
+    
+    # Prevent browsers from performing MIME sniffing
     response.headers['X-Content-Type-Options'] = 'nosniff'
-    response.headers['X-Frame-Options'] = 'SAMEORIGIN'
+    
+    # XSS protection
     response.headers['X-XSS-Protection'] = '1; mode=block'
+    
+    # Enforce HTTPS
+    response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+    
+    # Clickjacking protection
+    response.headers['X-Frame-Options'] = 'DENY'
+    
+    # Referrer policy
     response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
     
     return response
 
-# Password complexity checker
-def check_password_strength(password):
-    """Check if a password meets complexity requirements"""
-    if len(password) < 12:
-        return False, "Password must be at least 12 characters long."
+def init_security(app):
+    """Initialize security features for a Flask application"""
+    # Register before/after request handlers
+    app.before_request(before_request_security)
+    app.after_request(after_request_security)
     
-    # Check for character types
-    has_lower = any(c.islower() for c in password)
-    has_upper = any(c.isupper() for c in password)
-    has_digit = any(c.isdigit() for c in password)
-    has_special = any(not c.isalnum() for c in password)
+    # Set Flask app security settings
+    app.config['SESSION_COOKIE_SECURE'] = True
+    app.config['SESSION_COOKIE_HTTPONLY'] = True
+    app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+    app.config['PERMANENT_SESSION_LIFETIME'] = datetime.timedelta(hours=12)
     
-    if not (has_lower and has_upper and has_digit and has_special):
-        return False, "Password must include uppercase, lowercase, numbers, and special characters."
+    # Default to requiring HTTPS in production
+    if not app.debug and not app.testing:
+        from flask_talisman import Talisman
+        Talisman(app, content_security_policy={
+            'default-src': ['\'self\''],
+            'script-src': ['\'self\''],
+            'style-src': ['\'self\'', 'https://cdn.replit.com'],
+            'img-src': ['\'self\'', 'data:'],
+            'font-src': ['\'self\'', 'https://cdn.replit.com']
+        })
     
-    return True, "Password meets complexity requirements."
-
-# Initialize security settings
-SecurityManager.setup()
+    # Set up cleanup tasks for security
+    @app.before_first_request
+    def setup_security_cleanup():
+        def cleanup_job():
+            while True:
+                # Clean up expired CSRF tokens
+                now = time.time()
+                expired_tokens = [
+                    session_id for session_id, expiry in SecurityManager._csrf_token_expiry.items()
+                    if expiry < now
+                ]
+                
+                for session_id in expired_tokens:
+                    if session_id in SecurityManager._csrf_tokens:
+                        del SecurityManager._csrf_tokens[session_id]
+                    if session_id in SecurityManager._csrf_token_expiry:
+                        del SecurityManager._csrf_token_expiry[session_id]
+                
+                # Clean up old request counts for rate limiting
+                keys_to_remove = []
+                for key in SecurityManager._request_counts.keys():
+                    # Extract timestamp from key
+                    try:
+                        ip, timestamp = key.split(':')
+                        if int(timestamp) < int(now / 60) - 10:  # Keep for 10 minutes
+                            keys_to_remove.append(key)
+                    except:
+                        keys_to_remove.append(key)
+                
+                for key in keys_to_remove:
+                    del SecurityManager._request_counts[key]
+                
+                # Wait before next cleanup
+                time.sleep(300)  # Run every 5 minutes
+        
+        # Start cleanup thread
+        import threading
+        cleanup_thread = threading.Thread(target=cleanup_job)
+        cleanup_thread.daemon = True
+        cleanup_thread.start()
+    
+    logger.info("Security features initialized")

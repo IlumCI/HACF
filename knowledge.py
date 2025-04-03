@@ -258,7 +258,7 @@ class BestPracticesManager:
     """Manages best practices and coding standards"""
     
     @staticmethod
-    def get_best_practices(category: str = None, language: str = None) -> List[Dict[str, Any]]:
+    def get_best_practices(category: Optional[str] = None, language: Optional[str] = None) -> List[Dict[str, Any]]:
         """
         Get best practices for a specific category and/or language
         """
