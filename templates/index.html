@@ -15,67 +15,88 @@
             </div>
         </div>
         <div class="col-lg-6 mt-5 mt-lg-0 text-center d-flex justify-content-center">
-            <!-- SVG Visualization of the HACF Process -->
-            <svg width="100%" height="350" viewBox="0 0 500 350" class="img-fluid" style="max-width: 450px;">
-                <!-- Background Circle -->
-                <circle cx="250" cy="175" r="150" fill="#2a2a2a" />
+            <!-- Pyramid Visualization of the HACF Process -->
+            <svg width="100%" height="400" viewBox="0 0 500 450" class="img-fluid" style="max-width: 450px;">
+                <!-- Dark Background -->
+                <rect x="0" y="0" width="500" height="450" fill="#1a1a1a" rx="10" ry="10" />
                 
-                <!-- Layer 0-5 (Inner Circle) -->
-                <circle cx="250" cy="90" r="28" fill="#8A2BE2" class="layer-0-circle" /> <!-- Layer 0: Requirement Validation -->
-                <circle cx="155" cy="130" r="28" fill="#6610f2" class="layer-1-circle" /> <!-- Layer 1: Task Definition -->
-                <circle cx="110" cy="220" r="28" fill="#0dcaf0" class="layer-2-circle" /> <!-- Layer 2: Analysis & Research -->
-                <circle cx="155" cy="310" r="28" fill="#17a2b8" class="layer-3-circle" /> <!-- Layer 3: Refinement -->
-                <circle cx="250" cy="350" r="28" fill="#198754" class="layer-4-circle" /> <!-- Layer 4: Prototyping -->
-                <circle cx="345" cy="310" r="28" fill="#28a745" class="layer-5-circle" /> <!-- Layer 5: Development -->
+                <!-- Pyramid Structure -->
+                <path d="M50 400 L250 50 L450 400 Z" fill="#2a2a2a" stroke="#6c757d" stroke-width="2" />
                 
-                <!-- Layer 6-11 (Outer Circle) -->
-                <circle cx="390" cy="220" r="28" fill="#ffc107" class="layer-6-circle" /> <!-- Layer 6: Testing & QA -->
-                <circle cx="345" cy="130" r="28" fill="#fd7e14" class="layer-7-circle" /> <!-- Layer 7: Optimization -->
-                <circle cx="320" cy="175" r="28" fill="#e83e8c" class="layer-8-circle" /> <!-- Layer 8: Deployment Preparation -->
-                <circle cx="250" cy="175" r="28" fill="#dc3545" class="layer-9-circle" /> <!-- Layer 9: Final Output -->
-                <circle cx="180" cy="175" r="28" fill="#6f42c1" class="layer-10-circle" /> <!-- Layer 10: Monitoring & Feedback -->
-                <circle cx="250" cy="260" r="28" fill="#20c997" class="layer-11-circle" /> <!-- Layer 11: Evolution & Maintenance -->
+                <!-- Horizontal Dividers -->
+                <line x1="83.3" y1="350" x2="416.7" y2="350" stroke="#6c757d" stroke-width="1.5" stroke-dasharray="5,5" />
+                <line x1="116.7" y1="300" x2="383.3" y2="300" stroke="#6c757d" stroke-width="1.5" stroke-dasharray="5,5" />
+                <line x1="150" y1="250" x2="350" y2="250" stroke="#6c757d" stroke-width="1.5" stroke-dasharray="5,5" />
+                <line x1="183.3" y1="200" x2="316.7" y2="200" stroke="#6c757d" stroke-width="1.5" stroke-dasharray="5,5" />
+                <line x1="216.7" y1="150" x2="283.3" y2="150" stroke="#6c757d" stroke-width="1.5" stroke-dasharray="5,5" />
+                <line x1="233.3" y1="100" x2="266.7" y2="100" stroke="#6c757d" stroke-width="1.5" stroke-dasharray="5,5" />
                 
-                <!-- Connection Lines (Standard Flow) -->
-                <path d="M250 118 L180 130" stroke="#6c757d" stroke-width="2" stroke-dasharray="5,5" />
-                <path d="M155 158 L130 192" stroke="#6c757d" stroke-width="2" stroke-dasharray="5,5" />
-                <path d="M128 235 L152 282" stroke="#6c757d" stroke-width="2" stroke-dasharray="5,5" />
-                <path d="M185 310 L222 325" stroke="#6c757d" stroke-width="2" stroke-dasharray="5,5" />
-                <path d="M278 350 L317 324" stroke="#6c757d" stroke-width="2" stroke-dasharray="5,5" />
-                <path d="M365 285 L377 248" stroke="#6c757d" stroke-width="2" stroke-dasharray="5,5" />
-                <path d="M370 210 L345 158" stroke="#6c757d" stroke-width="2" stroke-dasharray="5,5" />
-                <path d="M315 130 L292 175" stroke="#6c757d" stroke-width="2" stroke-dasharray="5,5" />
-                <path d="M280 183 L250 185" stroke="#6c757d" stroke-width="2" stroke-dasharray="5,5" />
-                <path d="M220 175 L200 175" stroke="#6c757d" stroke-width="2" stroke-dasharray="5,5" />
-                <path d="M180 205 L220 240" stroke="#6c757d" stroke-width="2" stroke-dasharray="5,5" />
+                <!-- Layer Nodes -->
+                <!-- Foundation Layers (Bottom) -->
+                <circle cx="100" cy="375" r="25" fill="#8A2BE2" /> <!-- Layer 0: Requirement Validation -->
+                <circle cx="250" cy="375" r="25" fill="#6610f2" /> <!-- Layer 1: Task Definition -->
+                <circle cx="400" cy="375" r="25" fill="#0dcaf0" /> <!-- Layer 2: Analysis & Research -->
                 
-                <!-- Cross Connections (Showing Adaptive Flow) -->
-                <path d="M250 118 L320 160" stroke="#0dcaf0" stroke-width="2" />
-                <path d="M155 158 L250 175" stroke="#198754" stroke-width="2" />
-                <path d="M250 322 L345 160" stroke="#dc3545" stroke-width="2" />
-                <path d="M320 203 L250 230" stroke="#ffc107" stroke-width="2" />
-                <path d="M110 220 L345 130" stroke="#20c997" stroke-width="1.5" stroke-dasharray="3,3" />
-                <path d="M250 90 L345 310" stroke="#6610f2" stroke-width="1.5" stroke-dasharray="3,3" />
+                <!-- Middle Layers 1 -->
+                <circle cx="150" cy="325" r="25" fill="#17a2b8" /> <!-- Layer 3: Refinement -->
+                <circle cx="250" cy="325" r="25" fill="#198754" /> <!-- Layer 4: Prototyping -->
+                <circle cx="350" cy="325" r="25" fill="#28a745" /> <!-- Layer 5: Development -->
+                
+                <!-- Middle Layers 2 -->
+                <circle cx="175" cy="275" r="25" fill="#ffc107" /> <!-- Layer 6: Testing & QA -->
+                <circle cx="250" cy="275" r="25" fill="#fd7e14" /> <!-- Layer 7: Optimization -->
+                <circle cx="325" cy="275" r="25" fill="#e83e8c" /> <!-- Layer 8: Deployment Preparation -->
+                
+                <!-- Upper Layers -->
+                <circle cx="200" cy="225" r="25" fill="#dc3545" /> <!-- Layer 9: Final Output -->
+                <circle cx="300" cy="225" r="25" fill="#6f42c1" /> <!-- Layer 10: Monitoring & Feedback -->
+                
+                <!-- Top Layer -->
+                <circle cx="250" cy="175" r="25" fill="#20c997" /> <!-- Layer 11: Evolution & Maintenance -->
+                
+                <!-- Apex - HACF Symbol -->
+                <polygon points="250,75 275,115 225,115" fill="#0d6efd" stroke="white" stroke-width="2" />
+                <text x="250" y="103" text-anchor="middle" fill="white" font-size="12" font-weight="bold">HACF</text>
                 
                 <!-- Layer Labels -->
-                <text x="250" y="95" text-anchor="middle" fill="white" font-size="11">Layer 0</text>
-                <text x="155" y="135" text-anchor="middle" fill="white" font-size="11">Layer 1</text>
-                <text x="110" y="225" text-anchor="middle" fill="black" font-size="11">Layer 2</text>
-                <text x="155" y="315" text-anchor="middle" fill="white" font-size="11">Layer 3</text>
-                <text x="250" y="355" text-anchor="middle" fill="white" font-size="11">Layer 4</text>
-                <text x="345" y="315" text-anchor="middle" fill="white" font-size="11">Layer 5</text>
-                <text x="390" y="225" text-anchor="middle" fill="black" font-size="11">Layer 6</text>
-                <text x="345" y="135" text-anchor="middle" fill="white" font-size="11">Layer 7</text>
-                <text x="320" y="180" text-anchor="middle" fill="white" font-size="11">Layer 8</text>
-                <text x="250" y="180" text-anchor="middle" fill="white" font-size="11">Layer 9</text>
-                <text x="180" y="180" text-anchor="middle" fill="white" font-size="11">Layer 10</text>
-                <text x="250" y="265" text-anchor="middle" fill="black" font-size="11">Layer 11</text>
+                <text x="100" y="380" text-anchor="middle" fill="white" font-size="12">Layer 0</text>
+                <text x="250" y="380" text-anchor="middle" fill="white" font-size="12">Layer 1</text>
+                <text x="400" y="380" text-anchor="middle" fill="white" font-size="12">Layer 2</text>
                 
-                <!-- Memory Nodes -->
-                <circle cx="300" cy="135" r="8" fill="#0d6efd" />
-                <circle cx="200" cy="135" r="8" fill="#0d6efd" />
-                <circle cx="200" cy="215" r="8" fill="#0d6efd" />
-                <circle cx="300" cy="215" r="8" fill="#0d6efd" />
+                <text x="150" y="330" text-anchor="middle" fill="white" font-size="12">Layer 3</text>
+                <text x="250" y="330" text-anchor="middle" fill="white" font-size="12">Layer 4</text>
+                <text x="350" y="330" text-anchor="middle" fill="white" font-size="12">Layer 5</text>
+                
+                <text x="175" y="280" text-anchor="middle" fill="white" font-size="12">Layer 6</text>
+                <text x="250" y="280" text-anchor="middle" fill="white" font-size="12">Layer 7</text>
+                <text x="325" y="280" text-anchor="middle" fill="white" font-size="12">Layer 8</text>
+                
+                <text x="200" y="230" text-anchor="middle" fill="white" font-size="12">Layer 9</text>
+                <text x="300" y="230" text-anchor="middle" fill="white" font-size="12">Layer 10</text>
+                
+                <text x="250" y="180" text-anchor="middle" fill="white" font-size="12">Layer 11</text>
+                
+                <!-- Connection Lines (Standard Flow) -->
+                <path d="M125 375 L150 350" stroke="#6c757d" stroke-width="2" />
+                <path d="M275 375 L255 350" stroke="#6c757d" stroke-width="2" />
+                <path d="M375 375 L350 350" stroke="#6c757d" stroke-width="2" />
+                
+                <path d="M175 325 L188 300" stroke="#6c757d" stroke-width="2" />
+                <path d="M250 300 L250 300" stroke="#6c757d" stroke-width="2" />
+                <path d="M325 325 L312 300" stroke="#6c757d" stroke-width="2" />
+                
+                <path d="M200 275 L212 250" stroke="#6c757d" stroke-width="2" />
+                <path d="M275 275 L288 250" stroke="#6c757d" stroke-width="2" />
+                
+                <path d="M225 225 L248 200" stroke="#6c757d" stroke-width="2" />
+                <path d="M275 225 L252 200" stroke="#6c757d" stroke-width="2" />
+                
+                <!-- Cross Layer Memory Connections -->
+                <path d="M100 350 L200 225" stroke="#0d6efd" stroke-width="1.5" stroke-dasharray="3,3" />
+                <path d="M400 350 L300 225" stroke="#0d6efd" stroke-width="1.5" stroke-dasharray="3,3" />
+                <path d="M175 250 L250 175" stroke="#0d6efd" stroke-width="1.5" stroke-dasharray="3,3" />
+                <path d="M325 250 L250 175" stroke="#0d6efd" stroke-width="1.5" stroke-dasharray="3,3" />
+                <path d="M250 375 L250 175" stroke="#0d6efd" stroke-width="1.5" stroke-dasharray="3,3" />
             </svg>
         </div>
     </div>
