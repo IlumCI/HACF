@@ -212,3 +212,91 @@ class ProjectVersion(db.Model):
     
     def __repr__(self):
         return f'<ProjectVersion {self.version_number} for Project {self.project_id}>'
+
+# API Integration Models
+class ApiClient(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    name = db.Column(db.String(100), nullable=False)
+    client_id = db.Column(db.String(64), nullable=False, unique=True)
+    client_secret = db.Column(db.String(128), nullable=False)
+    redirect_uris = db.Column(db.Text, nullable=True)  # JSON array of URIs
+    allowed_scopes = db.Column(db.Text, nullable=False)  # JSON array of allowed scopes
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    last_used_at = db.Column(db.DateTime, nullable=True)
+    
+    # For OAuth integration
+    authorization_code = db.Column(db.String(100), nullable=True)
+    code_expires_at = db.Column(db.DateTime, nullable=True)
+    
+    def __repr__(self):
+        return f'<ApiClient {self.name}>'
+
+class ApiToken(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    api_client_id = db.Column(db.Integer, db.ForeignKey('api_client.id'), nullable=True)
+    access_token = db.Column(db.String(128), nullable=False, unique=True)
+    refresh_token = db.Column(db.String(128), nullable=True, unique=True)
+    token_type = db.Column(db.String(20), default='Bearer')
+    scopes = db.Column(db.Text, nullable=True)  # JSON array of scopes
+    expires_at = db.Column(db.DateTime, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    is_revoked = db.Column(db.Boolean, default=False)
+    
+    def __repr__(self):
+        return f'<ApiToken {self.id}>'
+    
+    @property
+    def is_expired(self):
+        if not self.expires_at:
+            return False
+        return datetime.utcnow() > self.expires_at
+
+class Webhook(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    name = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    url = db.Column(db.String(255), nullable=False)
+    secret = db.Column(db.String(64), nullable=True)  # For signature verification
+    events = db.Column(db.Text, nullable=False)  # JSON array of event types
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    last_triggered_at = db.Column(db.DateTime, nullable=True)
+    failure_count = db.Column(db.Integer, default=0)
+    
+    def __repr__(self):
+        return f'<Webhook {self.name}>'
+
+class WebhookEvent(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    webhook_id = db.Column(db.Integer, db.ForeignKey('webhook.id'), nullable=False)
+    event_type = db.Column(db.String(50), nullable=False)
+    payload = db.Column(db.Text, nullable=False)  # JSON payload
+    status = db.Column(db.String(20), default='pending')  # pending, sent, failed
+    response_code = db.Column(db.Integer, nullable=True)
+    response_body = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    processed_at = db.Column(db.DateTime, nullable=True)
+    retry_count = db.Column(db.Integer, default=0)
+    
+    def __repr__(self):
+        return f'<WebhookEvent {self.event_type} for Webhook {self.webhook_id}>'
+
+class Integration(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    provider = db.Column(db.String(50), nullable=False)  # github, gitlab, jenkins, etc.
+    name = db.Column(db.String(100), nullable=False)
+    config = db.Column(db.Text, nullable=False)  # JSON configuration
+    credentials = db.Column(db.Text, nullable=True)  # Encrypted credentials
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    last_used_at = db.Column(db.DateTime, nullable=True)
+    
+    __table_args__ = (db.UniqueConstraint('user_id', 'provider', 'name', name='_user_provider_name_uc'),)
+    
+    def __repr__(self):
+        return f'<Integration {self.provider}/{self.name}>'

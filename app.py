@@ -1005,5 +1005,38 @@ def add_project_to_team(team_id):
     flash('Project added to team successfully.', 'success')
     return redirect(url_for('team_detail', team_id=team_id))
 
+# Import and register API blueprint
+try:
+    from api import api as api_blueprint
+    app.register_blueprint(api_blueprint)
+    logger.info("API Blueprint registered successfully")
+except ImportError as e:
+    logger.error(f"Error importing API blueprint: {str(e)}")
+
+# Import and register Google OAuth blueprint
+try:
+    from google_auth import google_auth as google_auth_blueprint
+    app.register_blueprint(google_auth_blueprint)
+    logger.info("Google Auth Blueprint registered successfully")
+except ImportError as e:
+    logger.error(f"Error importing Google Auth blueprint: {str(e)}")
+
+# Import and register SSO blueprint
+try:
+    from sso import sso as sso_blueprint
+    app.register_blueprint(sso_blueprint)
+    logger.info("SSO Blueprint registered successfully")
+except ImportError as e:
+    logger.error(f"Error importing SSO blueprint: {str(e)}")
+
+# Add SSO login data to the login context
+@app.context_processor
+def inject_sso_providers():
+    try:
+        from sso import get_available_sso_providers
+        return {'sso_providers': get_available_sso_providers()}
+    except ImportError:
+        return {'sso_providers': []}
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
