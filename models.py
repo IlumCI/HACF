@@ -58,19 +58,40 @@ class Project(db.Model):
     title = db.Column(db.String(100), nullable=False)
     description = db.Column(db.Text)
     
-    # HACF layers output
-    task_definition = db.Column(db.Text)  # Layer 1: Task Definition & Planning
-    refined_structure = db.Column(db.Text)  # Layer 2: Refinement & Base Structure
-    development_code = db.Column(db.Text)  # Layer 3: Development & Execution
-    optimized_code = db.Column(db.Text)  # Layer 4: Debugging, Optimization & Security
-    files = db.Column(db.Text)  # JSON string of files generated - Layer 5: Final Output
+    # HACF layers output - 12 layer framework
+    layer0_output = db.Column(db.Text)  # Layer 0: Requirement Validation
+    layer1_output = db.Column(db.Text)  # Layer 1: Task Definition
+    layer2_output = db.Column(db.Text)  # Layer 2: Analysis & Research
+    layer3_output = db.Column(db.Text)  # Layer 3: Refinement
+    layer4_output = db.Column(db.Text)  # Layer 4: Prototyping
+    layer5_output = db.Column(db.Text)  # Layer 5: Development
+    layer6_output = db.Column(db.Text)  # Layer 6: Testing & QA
+    layer7_output = db.Column(db.Text)  # Layer 7: Optimization
+    layer8_output = db.Column(db.Text)  # Layer 8: Deployment Preparation
+    layer9_output = db.Column(db.Text)  # Layer 9: Final Output
+    layer10_output = db.Column(db.Text)  # Layer 10: Monitoring & Feedback
+    layer11_output = db.Column(db.Text)  # Layer 11: Evolution & Maintenance
     
-    # Layered process flags
+    # Legacy fields for backward compatibility
+    task_definition = db.Column(db.Text)  # Legacy: Layer 1
+    refined_structure = db.Column(db.Text)  # Legacy: Layer 2
+    development_code = db.Column(db.Text)  # Legacy: Layer 3
+    optimized_code = db.Column(db.Text)  # Legacy: Layer 4
+    files = db.Column(db.Text)  # Legacy: JSON string of files generated - Layer 5
+    
+    # Layered process flags - 12 layer framework
+    layer0_complete = db.Column(db.Boolean, default=False)
     layer1_complete = db.Column(db.Boolean, default=False)
     layer2_complete = db.Column(db.Boolean, default=False)
     layer3_complete = db.Column(db.Boolean, default=False)
     layer4_complete = db.Column(db.Boolean, default=False)
     layer5_complete = db.Column(db.Boolean, default=False)
+    layer6_complete = db.Column(db.Boolean, default=False)
+    layer7_complete = db.Column(db.Boolean, default=False)
+    layer8_complete = db.Column(db.Boolean, default=False)
+    layer9_complete = db.Column(db.Boolean, default=False)
+    layer10_complete = db.Column(db.Boolean, default=False)
+    layer11_complete = db.Column(db.Boolean, default=False)
     
     # Date tracking
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -84,13 +105,20 @@ class Project(db.Model):
     def progress(self):
         """Calculate project completion percentage based on completed layers"""
         completed_layers = sum([
+            self.layer0_complete,
             self.layer1_complete,
             self.layer2_complete,
             self.layer3_complete,
             self.layer4_complete,
-            self.layer5_complete
+            self.layer5_complete,
+            self.layer6_complete,
+            self.layer7_complete,
+            self.layer8_complete,
+            self.layer9_complete,
+            self.layer10_complete,
+            self.layer11_complete
         ])
-        return (completed_layers / 5) * 100
+        return (completed_layers / 12) * 100
         
 # Project Template model for saving and reusing project configurations
 class ProjectTemplate(db.Model):
@@ -295,7 +323,7 @@ class HACFSession(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     # Current state
-    current_layer = db.Column(db.Integer, default=1)  # Current HACF layer being processed (1-5)
+    current_layer = db.Column(db.Integer, default=0)  # Current HACF layer being processed (0-11)
     status = db.Column(db.String(20), default='active')  # active, paused, completed, failed
     
     # Adaptive sequencing
@@ -307,7 +335,9 @@ class HACFSession(db.Model):
     industry = db.Column(db.String(50), nullable=True)  # Industry specialization
     complexity_assessment = db.Column(db.Text, nullable=True)  # JSON complexity assessment
     
-    # Timestamps for layer completion
+    # Timestamps for layer completion - 12 layer framework
+    layer0_started_at = db.Column(db.DateTime, nullable=True)
+    layer0_completed_at = db.Column(db.DateTime, nullable=True)
     layer1_started_at = db.Column(db.DateTime, nullable=True)
     layer1_completed_at = db.Column(db.DateTime, nullable=True)
     layer2_started_at = db.Column(db.DateTime, nullable=True)
@@ -318,6 +348,18 @@ class HACFSession(db.Model):
     layer4_completed_at = db.Column(db.DateTime, nullable=True)
     layer5_started_at = db.Column(db.DateTime, nullable=True)
     layer5_completed_at = db.Column(db.DateTime, nullable=True)
+    layer6_started_at = db.Column(db.DateTime, nullable=True)
+    layer6_completed_at = db.Column(db.DateTime, nullable=True)
+    layer7_started_at = db.Column(db.DateTime, nullable=True)
+    layer7_completed_at = db.Column(db.DateTime, nullable=True)
+    layer8_started_at = db.Column(db.DateTime, nullable=True)
+    layer8_completed_at = db.Column(db.DateTime, nullable=True)
+    layer9_started_at = db.Column(db.DateTime, nullable=True)
+    layer9_completed_at = db.Column(db.DateTime, nullable=True)
+    layer10_started_at = db.Column(db.DateTime, nullable=True)
+    layer10_completed_at = db.Column(db.DateTime, nullable=True)
+    layer11_started_at = db.Column(db.DateTime, nullable=True)
+    layer11_completed_at = db.Column(db.DateTime, nullable=True)
     
     # Relationships
     checkpoints = db.relationship('HACFCheckpoint', backref='session', lazy=True)
@@ -331,11 +373,11 @@ class HACFSession(db.Model):
     def layer_sequence_list(self) -> List[int]:
         """Get the layer sequence as a Python list"""
         if not self.layer_sequence:
-            return [1, 2, 3, 4, 5]  # Default sequence
+            return [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]  # Default sequence - 12 layer framework
         try:
             return json.loads(self.layer_sequence)
         except:
-            return [1, 2, 3, 4, 5]
+            return [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
     
     @property
     def next_layer(self) -> Optional[int]:

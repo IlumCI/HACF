@@ -18,10 +18,10 @@
     
     .layer-indicator {
         display: inline-block;
-        width: 20px;
-        height: 20px;
+        width: 15px;
+        height: 15px;
         border-radius: 50%;
-        margin-right: 10px;
+        margin-right: 5px;
         vertical-align: middle;
     }
     
@@ -137,11 +137,18 @@
                                         </div>
                                         <div class="d-flex justify-content-between align-items-center">
                                             <div>
-                                                <span class="layer-indicator {% if project.layer1_complete %}completed{% elif project.created_at %}active{% else %}incomplete{% endif %}" title="Task Definition"></span>
-                                                <span class="layer-indicator {% if project.layer2_complete %}completed{% elif project.layer1_complete and not project.layer2_complete %}active{% else %}incomplete{% endif %}" title="Refinement"></span>
-                                                <span class="layer-indicator {% if project.layer3_complete %}completed{% elif project.layer2_complete and not project.layer3_complete %}active{% else %}incomplete{% endif %}" title="Development"></span>
-                                                <span class="layer-indicator {% if project.layer4_complete %}completed{% elif project.layer3_complete and not project.layer4_complete %}active{% else %}incomplete{% endif %}" title="Optimization"></span>
-                                                <span class="layer-indicator {% if project.layer5_complete %}completed{% elif project.layer4_complete and not project.layer5_complete %}active{% else %}incomplete{% endif %}" title="Final Output"></span>
+                                                <span class="layer-indicator {% if project.layer0_complete %}completed{% elif project.created_at %}active{% else %}incomplete{% endif %}" title="Requirement Validation"></span>
+                                                <span class="layer-indicator {% if project.layer1_complete %}completed{% elif project.layer0_complete and not project.layer1_complete %}active{% else %}incomplete{% endif %}" title="Task Definition"></span>
+                                                <span class="layer-indicator {% if project.layer2_complete %}completed{% elif project.layer1_complete and not project.layer2_complete %}active{% else %}incomplete{% endif %}" title="Analysis & Research"></span>
+                                                <span class="layer-indicator {% if project.layer3_complete %}completed{% elif project.layer2_complete and not project.layer3_complete %}active{% else %}incomplete{% endif %}" title="Refinement"></span>
+                                                <span class="layer-indicator {% if project.layer4_complete %}completed{% elif project.layer3_complete and not project.layer4_complete %}active{% else %}incomplete{% endif %}" title="Prototyping"></span>
+                                                <span class="layer-indicator {% if project.layer5_complete %}completed{% elif project.layer4_complete and not project.layer5_complete %}active{% else %}incomplete{% endif %}" title="Development"></span>
+                                                <span class="layer-indicator {% if project.layer6_complete %}completed{% elif project.layer5_complete and not project.layer6_complete %}active{% else %}incomplete{% endif %}" title="Testing & QA"></span>
+                                                <span class="layer-indicator {% if project.layer7_complete %}completed{% elif project.layer6_complete and not project.layer7_complete %}active{% else %}incomplete{% endif %}" title="Optimization"></span>
+                                                <span class="layer-indicator {% if project.layer8_complete %}completed{% elif project.layer7_complete and not project.layer8_complete %}active{% else %}incomplete{% endif %}" title="Deployment Preparation"></span>
+                                                <span class="layer-indicator {% if project.layer9_complete %}completed{% elif project.layer8_complete and not project.layer9_complete %}active{% else %}incomplete{% endif %}" title="Final Output"></span>
+                                                <span class="layer-indicator {% if project.layer10_complete %}completed{% elif project.layer9_complete and not project.layer10_complete %}active{% else %}incomplete{% endif %}" title="Monitoring & Feedback"></span>
+                                                <span class="layer-indicator {% if project.layer11_complete %}completed{% elif project.layer10_complete and not project.layer11_complete %}active{% else %}incomplete{% endif %}" title="Evolution & Maintenance"></span>
                                             </div>
                                             <a href="{{ url_for('project_detail', project_id=project.id) }}" class="btn btn-sm btn-outline-primary">Open</a>
                                         </div>
@@ -174,33 +181,76 @@
                 <div class="hacf-flow-chart">
                     <div class="row justify-content-center">
                         <div class="col-md-8">
+                            <div class="hacf-node" id="layer0-node">
+                                <h5>Layer 0: Requirement Validation</h5>
+                                <p>Validates project requirements, gathers stakeholder feedback, and identifies early constraints</p>
+                                <span class="badge bg-secondary">meta-llama/Meta-Llama-3.1</span>
+                            </div>
+                            
                             <div class="hacf-node" id="layer1-node">
-                                <h5>Layer 1: Task Definition & Planning</h5>
-                                <p>Converts user requests into structured plans and well-formed prompts</p>
+                                <h5>Layer 1: Task Definition</h5>
+                                <p>Defines project goals, detailed requirements, and constraints</p>
                                 <span class="badge bg-secondary">meta-llama/Meta-Llama-3.1</span>
                             </div>
                             
                             <div class="hacf-node" id="layer2-node">
-                                <h5>Layer 2: Refinement & Base Structure</h5>
-                                <p>Converts high-level plans into technical roadmaps with base code structure</p>
+                                <h5>Layer 2: Analysis & Research</h5>
+                                <p>Conducts market research, competitor analysis, and technology assessment</p>
                                 <span class="badge bg-secondary">deepseek-reasoner</span>
                             </div>
                             
                             <div class="hacf-node" id="layer3-node">
-                                <h5>Layer 3: Development & Execution</h5>
-                                <p>Generates fully functional code based on structured inputs</p>
-                                <span class="badge bg-secondary">codestral-latest</span>
+                                <h5>Layer 3: Refinement</h5>
+                                <p>Creates system architecture, selects appropriate technologies, and develops a detailed plan</p>
+                                <span class="badge bg-secondary">deepseek-reasoner</span>
                             </div>
                             
                             <div class="hacf-node" id="layer4-node">
-                                <h5>Layer 4: Debugging, Optimization & Security</h5>
-                                <p>Reviews, debugs, and optimizes generated code</p>
-                                <span class="badge bg-secondary">gpt-4o</span>
+                                <h5>Layer 4: Prototyping</h5>
+                                <p>Builds rapid prototypes, validates concepts, and creates visual representations</p>
+                                <span class="badge bg-secondary">codestral-latest</span>
                             </div>
                             
                             <div class="hacf-node" id="layer5-node">
-                                <h5>Layer 5: Final Output</h5>
-                                <p>Processes, formats, and prepares the final code for download</p>
+                                <h5>Layer 5: Development</h5>
+                                <p>Implements full code solutions based on approved designs and prototypes</p>
+                                <span class="badge bg-secondary">codestral-latest</span>
+                            </div>
+                            
+                            <div class="hacf-node" id="layer6-node">
+                                <h5>Layer 6: Testing & Quality Assurance</h5>
+                                <p>Performs comprehensive testing including unit, integration, and quality assessment</p>
+                                <span class="badge bg-secondary">claude-3-7-sonnet</span>
+                            </div>
+                            
+                            <div class="hacf-node" id="layer7-node">
+                                <h5>Layer 7: Optimization</h5>
+                                <p>Debugs code, improves performance, and enhances security measures</p>
+                                <span class="badge bg-secondary">gpt-4o</span>
+                            </div>
+                            
+                            <div class="hacf-node" id="layer8-node">
+                                <h5>Layer 8: Deployment Preparation</h5>
+                                <p>Sets up infrastructure, configures CI/CD pipelines, and provisions environments</p>
+                                <span class="badge bg-secondary">gpt-4o</span>
+                            </div>
+                            
+                            <div class="hacf-node" id="layer9-node">
+                                <h5>Layer 9: Final Output</h5>
+                                <p>Creates comprehensive documentation, packages deliverables, and finalizes delivery</p>
+                                <span class="badge bg-secondary">claude-3-7-sonnet</span>
+                            </div>
+                            
+                            <div class="hacf-node" id="layer10-node">
+                                <h5>Layer 10: Monitoring & Feedback</h5>
+                                <p>Establishes monitoring systems, collects user feedback, and implements analytics</p>
+                                <span class="badge bg-secondary">gpt-4o</span>
+                            </div>
+                            
+                            <div class="hacf-node" id="layer11-node">
+                                <h5>Layer 11: Evolution & Maintenance</h5>
+                                <p>Plans ongoing maintenance, creates future roadmaps, and manages technical debt</p>
+                                <span class="badge bg-secondary">meta-llama/Meta-Llama-3.1</span>
                             </div>
                         </div>
                     </div>

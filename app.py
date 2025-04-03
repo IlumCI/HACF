@@ -221,7 +221,7 @@ def analytics():
     
     # Get basic stats
     projects = models.Project.query.all()
-    completed_projects = models.Project.query.filter_by(layer5_complete=True).count()
+    completed_projects = models.Project.query.filter_by(layer11_complete=True).count()
     
     stats = {
         'total_projects': len(projects),
@@ -233,13 +233,20 @@ def analytics():
         'total_interactions': models.Message.query.count()
     }
     
-    # Layer statistics
+    # Layer statistics for all 12 layers
     layer_stats = {
+        'layer0': {'avg_time': 1, 'success_rate': 97, 'common_issue': 'Unclear requirements'},
         'layer1': {'avg_time': 2, 'success_rate': 95, 'common_issue': 'Incomplete specifications'},
-        'layer2': {'avg_time': 4, 'success_rate': 88, 'common_issue': 'Incompatible technologies'},
-        'layer3': {'avg_time': 10, 'success_rate': 75, 'common_issue': 'Integration errors'},
-        'layer4': {'avg_time': 6, 'success_rate': 80, 'common_issue': 'Security vulnerabilities'},
-        'layer5': {'avg_time': 1, 'success_rate': 98, 'common_issue': 'File formatting issues'}
+        'layer2': {'avg_time': 3, 'success_rate': 90, 'common_issue': 'Research gaps'},
+        'layer3': {'avg_time': 4, 'success_rate': 88, 'common_issue': 'Incompatible technologies'},
+        'layer4': {'avg_time': 5, 'success_rate': 85, 'common_issue': 'Prototype limitations'},
+        'layer5': {'avg_time': 10, 'success_rate': 75, 'common_issue': 'Integration errors'},
+        'layer6': {'avg_time': 4, 'success_rate': 82, 'common_issue': 'Test coverage gaps'},
+        'layer7': {'avg_time': 6, 'success_rate': 80, 'common_issue': 'Security vulnerabilities'},
+        'layer8': {'avg_time': 3, 'success_rate': 92, 'common_issue': 'Configuration issues'},
+        'layer9': {'avg_time': 1, 'success_rate': 98, 'common_issue': 'File formatting issues'},
+        'layer10': {'avg_time': 2, 'success_rate': 94, 'common_issue': 'Monitoring setup problems'},
+        'layer11': {'avg_time': 3, 'success_rate': 91, 'common_issue': 'Maintenance planning gaps'}
     }
     
     # Project timeline data
@@ -321,9 +328,13 @@ def project_detail(project_id):
         flash('You do not have permission to view this project.', 'danger')
         return redirect(url_for('dashboard'))
     
-    # Determine the active layer
-    active_layer = 1
-    if project.layer1_complete and not project.layer2_complete:
+    # Determine the active layer in the 12-layer framework
+    active_layer = 0
+    if not project.layer0_complete:
+        active_layer = 0
+    elif project.layer0_complete and not project.layer1_complete:
+        active_layer = 1
+    elif project.layer1_complete and not project.layer2_complete:
         active_layer = 2
     elif project.layer2_complete and not project.layer3_complete:
         active_layer = 3
@@ -331,8 +342,20 @@ def project_detail(project_id):
         active_layer = 4
     elif project.layer4_complete and not project.layer5_complete:
         active_layer = 5
-    elif project.layer5_complete:
-        active_layer = 5
+    elif project.layer5_complete and not project.layer6_complete:
+        active_layer = 6
+    elif project.layer6_complete and not project.layer7_complete:
+        active_layer = 7
+    elif project.layer7_complete and not project.layer8_complete:
+        active_layer = 8
+    elif project.layer8_complete and not project.layer9_complete:
+        active_layer = 9
+    elif project.layer9_complete and not project.layer10_complete:
+        active_layer = 10
+    elif project.layer10_complete and not project.layer11_complete:
+        active_layer = 11
+    elif project.layer11_complete:
+        active_layer = 11
     
     # Parse files if they exist
     if project.files:
@@ -456,28 +479,55 @@ def process_layer(project_id, layer_num):
         
         output = f"Processed layer {layer_num} for project {project_id}"
         
-        # Update project based on layer
-        if layer_num == 1:
-            project.task_definition = input_data
+        # Update project based on layer - 12 layer framework
+        if layer_num == 0:
+            project.layer0_output = input_data
+            project.layer0_complete = True
+        elif layer_num == 1:
+            project.layer1_output = input_data
+            project.task_definition = input_data  # For backward compatibility
             project.layer1_complete = True
         elif layer_num == 2:
-            project.refined_structure = input_data
+            project.layer2_output = input_data
             project.layer2_complete = True
         elif layer_num == 3:
-            project.development_code = input_data
+            project.layer3_output = input_data
+            project.refined_structure = input_data  # For backward compatibility
             project.layer3_complete = True
         elif layer_num == 4:
-            project.optimized_code = input_data
+            project.layer4_output = input_data
             project.layer4_complete = True
         elif layer_num == 5:
-            # For final layer, we'd generate files
+            project.layer5_output = input_data
+            project.development_code = input_data  # For backward compatibility
+            project.layer5_complete = True
+        elif layer_num == 6:
+            project.layer6_output = input_data
+            project.layer6_complete = True
+        elif layer_num == 7:
+            project.layer7_output = input_data
+            project.optimized_code = input_data  # For backward compatibility
+            project.layer7_complete = True
+        elif layer_num == 8:
+            project.layer8_output = input_data
+            project.layer8_complete = True
+        elif layer_num == 9:
+            # For file generation layer (previously layer 5)
+            project.layer9_output = input_data
+            # Generate files
             files = [
                 {"name": "index.html", "content": "<html><body><h1>Hello World</h1></body></html>"},
                 {"name": "style.css", "content": "body { font-family: Arial; }"},
                 {"name": "script.js", "content": "console.log('Hello from HACF!');"}
             ]
             project.files = json.dumps(files)
-            project.layer5_complete = True
+            project.layer9_complete = True
+        elif layer_num == 10:
+            project.layer10_output = input_data
+            project.layer10_complete = True
+        elif layer_num == 11:
+            project.layer11_output = input_data
+            project.layer11_complete = True
             project.completed_at = datetime.datetime.utcnow()
         
         db.session.commit()
@@ -559,15 +609,43 @@ def project_json(project_id):
             "message": "Access denied"
         }), 403
     
-    # Create a JSON representation of the project
+    # Create a JSON representation of the project with all 12 layers
     project_data = {
         "id": project.id,
         "title": project.title,
         "description": project.description,
+        # Layer outputs - 12 layer framework
+        "layer0_output": project.layer0_output,
+        "layer1_output": project.layer1_output,
+        "layer2_output": project.layer2_output,
+        "layer3_output": project.layer3_output,
+        "layer4_output": project.layer4_output,
+        "layer5_output": project.layer5_output,
+        "layer6_output": project.layer6_output,
+        "layer7_output": project.layer7_output,
+        "layer8_output": project.layer8_output,
+        "layer9_output": project.layer9_output,
+        "layer10_output": project.layer10_output,
+        "layer11_output": project.layer11_output,
+        # Legacy fields for backward compatibility
         "task_definition": project.task_definition,
         "refined_structure": project.refined_structure,
         "development_code": project.development_code,
         "optimized_code": project.optimized_code,
+        # Layer completion flags
+        "layer0_complete": project.layer0_complete,
+        "layer1_complete": project.layer1_complete,
+        "layer2_complete": project.layer2_complete,
+        "layer3_complete": project.layer3_complete,
+        "layer4_complete": project.layer4_complete,
+        "layer5_complete": project.layer5_complete,
+        "layer6_complete": project.layer6_complete,
+        "layer7_complete": project.layer7_complete,
+        "layer8_complete": project.layer8_complete,
+        "layer9_complete": project.layer9_complete,
+        "layer10_complete": project.layer10_complete,
+        "layer11_complete": project.layer11_complete,
+        # Files and dates
         "files": json.loads(project.files) if project.files else [],
         "created_at": project.created_at.isoformat() if project.created_at else None,
         "updated_at": project.updated_at.isoformat() if project.updated_at else None,
