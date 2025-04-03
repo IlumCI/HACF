@@ -3,7 +3,7 @@
 {% block head %}
 <style>
     .chat-container {
-        max-height: 400px;
+        max-height: 500px;
         overflow-y: auto;
         margin-bottom: 15px;
         padding: 15px;
@@ -67,21 +67,87 @@
             transform: translateY(-5px);
         }
     }
+    
+    .output {
+        max-height: 250px;
+        overflow-y: auto;
+        white-space: pre-wrap;
+        word-break: break-word;
+        font-size: 0.9em;
+    }
+    
+    .section {
+        margin-bottom: 25px;
+        padding: 15px;
+        border: 1px solid var(--bs-gray-700);
+        border-radius: 8px;
+        background-color: rgba(0, 0, 0, 0.1);
+    }
+    
+    .section h5 {
+        margin-top: 0;
+        border-bottom: 1px solid var(--bs-gray-700);
+        padding-bottom: 8px;
+        margin-bottom: 15px;
+    }
+    
+    pre {
+        background-color: var(--bs-gray-800);
+        border-radius: 4px;
+        padding: 10px;
+        max-width: 100%;
+        overflow-x: auto;
+    }
+    
+    code {
+        color: var(--bs-light);
+        font-family: monospace;
+    }
+    
+    .badge-stage {
+        font-size: 0.7em;
+        padding: 5px 8px;
+        border-radius: 10px;
+        margin-left: 8px;
+    }
 </style>
 {% endblock %}
 
 {% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="alert alert-info">
+            <strong><i class="feather-info"></i> Welcome to the HACF Chatbot!</strong> 
+            This platform uses the Hierarchical AI Collaboration Framework to help you create projects through a structured AI collaboration process.
+            <button class="btn btn-sm btn-outline-primary float-end" data-bs-toggle="modal" data-bs-target="#aboutModal">
+                Learn more about HACF
+            </button>
+        </div>
+    </div>
+</div>
+
 <div class="row">
     <div class="col-md-6">
         <div class="card mb-4">
-            <div class="card-header">
-                <h4>Chatbot Interface</h4>
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h4><i class="feather-message-square me-2"></i>AI Chat</h4>
+                <div>
+                    <span class="badge bg-success" id="puter-status-badge" style="display: none;">
+                        <i class="feather-check-circle"></i> Puter.js Ready
+                    </span>
+                </div>
             </div>
             <div class="card-body">
                 <div class="chat-container" id="chat-container">
                     <div class="message-row">
                         <div class="message bot-message">
                             Hello! I'm your AI assistant powered by the Hierarchical AI Collaboration Framework. How can I help you today?
+                            <br><br>Try the following:
+                            <ul>
+                                <li>Ask a general question</li>
+                                <li>Type <code>/hacf build a weather app</code> to create a project</li>
+                                <li>Type <code>/clear</code> to reset our conversation</li>
+                            </ul>
                         </div>
                     </div>
                     <!-- Chat messages will be added here dynamically -->
@@ -94,8 +160,10 @@
                     </div>
                 </div>
                 <div class="input-group">
-                    <input type="text" id="user-input" class="form-control" placeholder="Type your message...">
-                    <button class="btn btn-primary" id="send-btn">Send</button>
+                    <input type="text" id="user-input" class="form-control" placeholder="Type your message or /hacf command...">
+                    <button class="btn btn-primary" id="send-btn">
+                        <i class="feather-send"></i> Send
+                    </button>
                 </div>
             </div>
         </div>
@@ -104,40 +172,63 @@
     <div class="col-md-6">
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h4>HACF Project Builder</h4>
-                <button class="btn btn-sm btn-outline-secondary" id="toggle-hacf-btn">Show/Hide</button>
+                <h4><i class="feather-layers me-2"></i>HACF Project Builder</h4>
+                <div>
+                    <button class="btn btn-sm btn-outline-secondary" id="toggle-hacf-btn">
+                        <i class="feather-eye"></i> Show/Hide
+                    </button>
+                </div>
             </div>
             <div class="card-body" id="hacf-container">
                 <!-- Task Definition & Planning Layer -->
                 <div class="section mb-4">
-                    <h5>Task Definition & Planning</h5>
-                    <textarea id="task-input" class="form-control mb-2" placeholder="Enter task description"></textarea>
-                    <button onclick="defineTask()" class="btn btn-primary w-100">Define Task</button>
+                    <h5>
+                        <i class="feather-target me-1"></i>Task Definition & Planning
+                        <span class="badge bg-primary badge-stage">Stage 1</span>
+                    </h5>
+                    <textarea id="task-input" class="form-control mb-2" rows="3" placeholder="Enter what you want to build or a problem to solve..."></textarea>
+                    <button onclick="defineTask()" class="btn btn-primary">
+                        <i class="feather-play"></i> Define Task
+                    </button>
                     <div id="task-output" class="output mt-2 p-2 border rounded bg-dark"></div>
                 </div>
 
                 <!-- Refinement & Base Structure Layer -->
                 <div class="section mb-4">
-                    <h5>Refinement & Base Structure</h5>
+                    <h5>
+                        <i class="feather-git-branch me-1"></i>Refinement & Base Structure
+                        <span class="badge bg-info badge-stage">Stage 2</span>
+                    </h5>
                     <div id="refine-output" class="output p-2 border rounded bg-dark"></div>
                 </div>
 
                 <!-- Development & Execution Layer -->
                 <div class="section mb-4">
-                    <h5>Development & Execution</h5>
+                    <h5>
+                        <i class="feather-code me-1"></i>Development & Execution
+                        <span class="badge bg-success badge-stage">Stage 3</span>
+                    </h5>
                     <div id="develop-output" class="output p-2 border rounded bg-dark"></div>
                 </div>
 
                 <!-- Debugging, Optimization & Security Layer -->
                 <div class="section mb-4">
-                    <h5>Debugging, Optimization & Security</h5>
+                    <h5>
+                        <i class="feather-shield me-1"></i>Optimization & Security
+                        <span class="badge bg-warning text-dark badge-stage">Stage 4</span>
+                    </h5>
                     <div id="optimize-output" class="output p-2 border rounded bg-dark"></div>
                 </div>
 
                 <!-- Final Output Layer -->
                 <div class="section">
-                    <h5>Final Output</h5>
-                    <button onclick="generateDownload()" class="btn btn-success w-100">Download Project</button>
+                    <h5>
+                        <i class="feather-package me-1"></i>Final Output
+                        <span class="badge bg-secondary badge-stage">Stage 5</span>
+                    </h5>
+                    <button onclick="generateDownload()" class="btn btn-success">
+                        <i class="feather-download"></i> Download Project
+                    </button>
                     <div id="final-output" class="output mt-2 p-2 border rounded bg-dark"></div>
                 </div>
             </div>
@@ -158,9 +249,42 @@
         toggleBtn.addEventListener('click', function() {
             if (hacfContainer.style.display === 'none') {
                 hacfContainer.style.display = 'block';
+                toggleBtn.innerHTML = '<i class="feather-eye"></i> Show/Hide';
             } else {
                 hacfContainer.style.display = 'none';
+                toggleBtn.innerHTML = '<i class="feather-eye-off"></i> Show/Hide';
             }
+        });
+        
+        // Check Puter.js authentication status
+        const puterStatusBadge = document.getElementById('puter-status-badge');
+        
+        // Try passive authentication
+        puter.auth.authenticate({
+            passive: true,
+            client_id: 'HACF Chatbot',
+            scope: ['ai.chat']
+        }).then(() => {
+            // Authentication succeeded
+            puterStatusBadge.style.display = 'inline-block';
+            console.log("Puter.js authenticated successfully (passive)");
+        }).catch((error) => {
+            // Authentication failed or not previously authenticated
+            puterStatusBadge.style.display = 'none';
+            console.log("Puter.js not authenticated:", error.message);
+        });
+        
+        // Apply syntax highlighting to code blocks
+        document.querySelectorAll('pre code').forEach((block) => {
+            if (typeof hljs !== 'undefined') {
+                hljs.highlightBlock(block);
+            }
+        });
+        
+        // Initialize Bootstrap tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl)
         });
     });
 </script>
