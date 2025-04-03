@@ -46,41 +46,238 @@ class AdaptiveLayerSequencer:
     }
     
     # Layer transition networks - defines how layers can connect in non-linear ways
+    # Enhanced layer definitions (12 total layers)
+    # Layer 0: Requirement Validation (validation, stakeholder feedback, early constraints)
+    # Layer 1: Task Definition (goals, requirements, constraints)
+    # Layer 2: Analysis & Research (market research, competitor analysis, technology assessment)
+    # Layer 3: Refinement (architecture, technology selection, planning)
+    # Layer 4: Prototyping (rapid prototyping, concept validation, visual representation)
+    # Layer 5: Development (coding, implementation)
+    # Layer 6: Testing & Quality Assurance (unit testing, integration testing, QA)
+    # Layer 7: Optimization (debugging, performance, security)
+    # Layer 8: Deployment Preparation (infrastructure setup, CI/CD, environment provisioning)
+    # Layer 9: Final Output (documentation, packaging, delivery)
+    # Layer 10: Monitoring & Feedback (monitoring setup, feedback collection, analytics)
+    # Layer 11: Evolution & Maintenance (maintenance planning, roadmap, technical debt management)
+    
+    # Layer names, descriptions, and associated AI models
+    HACF_LAYERS = {
+        0: {
+            'name': 'Requirement Validation',
+            'description': 'Validates project requirements, gathers stakeholder feedback, and identifies early constraints',
+            'model': 'meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo',
+            'responsibilities': [
+                'Validate user requirements for clarity and completeness',
+                'Gather and incorporate stakeholder feedback',
+                'Identify early project constraints and limitations',
+                'Perform initial feasibility assessment',
+                'Establish acceptance criteria'
+            ]
+        },
+        1: {
+            'name': 'Task Definition',
+            'description': 'Defines project goals, detailed requirements, and constraints',
+            'model': 'meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo',
+            'responsibilities': [
+                'Convert user requirements into structured project plans',
+                'Define clear project goals and objectives',
+                'Outline constraints and limitations',
+                'Create initial project scope definition',
+                'Structure requirements into actionable tasks'
+            ]
+        },
+        2: {
+            'name': 'Analysis & Research',
+            'description': 'Conducts market research, competitor analysis, and technology assessment',
+            'model': 'deepseek-reasoner',
+            'responsibilities': [
+                'Perform market and competitor analysis',
+                'Evaluate available technologies and tools',
+                'Research similar solutions and best practices',
+                'Analyze technical feasibility of requirements',
+                'Identify potential challenges and risks'
+            ]
+        },
+        3: {
+            'name': 'Refinement',
+            'description': 'Creates system architecture, selects appropriate technologies, and develops a detailed plan',
+            'model': 'deepseek-reasoner',
+            'responsibilities': [
+                'Define system architecture and components',
+                'Select optimal technologies and frameworks',
+                'Create detailed implementation plan',
+                'Design data models and relationships',
+                'Ensure technical consistency across components'
+            ]
+        },
+        4: {
+            'name': 'Prototyping',
+            'description': 'Builds rapid prototypes, validates concepts, and creates visual representations',
+            'model': 'codestral-latest',
+            'responsibilities': [
+                'Develop proof-of-concept implementations',
+                'Create UI/UX mockups and wireframes',
+                'Build functional prototypes for validation',
+                'Test critical functionality assumptions',
+                'Gather early feedback on design concepts'
+            ]
+        },
+        5: {
+            'name': 'Development',
+            'description': 'Implements full code solutions based on approved designs and prototypes',
+            'model': 'codestral-latest',
+            'responsibilities': [
+                'Write production-ready code',
+                'Implement frontend and backend components',
+                'Develop database schema and interactions',
+                'Create APIs and service integrations',
+                'Follow coding standards and best practices'
+            ]
+        },
+        6: {
+            'name': 'Testing & Quality Assurance',
+            'description': 'Performs comprehensive testing including unit, integration, and quality assessment',
+            'model': 'claude-3-7-sonnet',
+            'responsibilities': [
+                'Develop and execute unit tests',
+                'Perform integration and system testing',
+                'Conduct user acceptance testing',
+                'Ensure code quality and standards compliance',
+                'Validate functionality against requirements'
+            ]
+        },
+        7: {
+            'name': 'Optimization',
+            'description': 'Debugs code, improves performance, and enhances security measures',
+            'model': 'gpt-4o',
+            'responsibilities': [
+                'Identify and fix bugs and issues',
+                'Optimize performance and resource usage',
+                'Implement security enhancements',
+                'Refactor code for readability and maintainability',
+                'Conduct code reviews and address feedback'
+            ]
+        },
+        8: {
+            'name': 'Deployment Preparation',
+            'description': 'Sets up infrastructure, configures CI/CD pipelines, and provisions environments',
+            'model': 'gpt-4o',
+            'responsibilities': [
+                'Configure deployment environments',
+                'Set up continuous integration/deployment pipelines',
+                'Prepare infrastructure for production',
+                'Configure monitoring and logging solutions',
+                'Create deployment and rollback procedures'
+            ]
+        },
+        9: {
+            'name': 'Final Output',
+            'description': 'Creates comprehensive documentation, packages deliverables, and finalizes delivery',
+            'model': 'claude-3-7-sonnet',
+            'responsibilities': [
+                'Generate comprehensive documentation',
+                'Package code and assets for delivery',
+                'Create user guides and instructions',
+                'Prepare project handover materials',
+                'Ensure all deliverables meet quality standards'
+            ]
+        },
+        10: {
+            'name': 'Monitoring & Feedback',
+            'description': 'Establishes monitoring systems, collects user feedback, and implements analytics',
+            'model': 'gpt-4o',
+            'responsibilities': [
+                'Set up application and performance monitoring',
+                'Implement feedback collection mechanisms',
+                'Configure analytics and reporting',
+                'Create dashboards and visualization tools',
+                'Establish alerting and notification systems'
+            ]
+        },
+        11: {
+            'name': 'Evolution & Maintenance',
+            'description': 'Plans ongoing maintenance, creates future roadmaps, and manages technical debt',
+            'model': 'meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo',
+            'responsibilities': [
+                'Develop maintenance and support plans',
+                'Create feature roadmap for future development',
+                'Manage and prioritize technical debt',
+                'Plan for scalability and future enhancements',
+                'Document long-term sustainability strategies'
+            ]
+        }
+    }
+    
     LAYER_TRANSITION_NETWORKS = {
         'standard': {
+            0: [1],           # From layer 0, can only go to layer 1
             1: [2],           # From layer 1, can only go to layer 2
             2: [3],           # From layer 2, can only go to layer 3
             3: [4],           # From layer 3, can only go to layer 4
             4: [5],           # From layer 4, can only go to layer 5
-            5: []             # Terminal layer
+            5: [6],           # From layer 5, can only go to layer 6
+            6: [7],           # From layer 6, can only go to layer 7
+            7: [8],           # From layer 7, can only go to layer 8
+            8: [9],           # From layer 8, can only go to layer 9
+            9: [10],          # From layer 9, can only go to layer 10
+            10: [11],         # From layer 10, can only go to layer 11
+            11: []            # Terminal layer
         },
         'agile': {
-            1: [2, 3],        # From layer 1, can go to layer 2 or skip to 3
-            2: [3, 4],        # From layer 2, can go to layer 3 or skip to 4
-            3: [4, 5, 2],     # From layer 3, can loop back to 2 or go forward
-            4: [5, 3, 2],     # From layer 4, can loop back or go forward
-            5: [2, 3, 4]      # Can loop back from final layer
+            0: [1],           # Always start with requirement validation
+            1: [2, 3],        # Can skip analysis & go straight to refinement
+            2: [3, 4],        # Can go to refinement or skip to prototyping
+            3: [4, 5],        # Can go to prototyping or skip to development
+            4: [3, 5, 6],     # Can loop back to refinement or move forward
+            5: [4, 6, 7],     # Can loop back to prototype or move forward
+            6: [5, 7, 8],     # Can loop back to development or move forward
+            7: [5, 6, 8, 9],  # Can loop back or skip forward
+            8: [7, 9, 10],    # Can loop back or move forward
+            9: [10, 7, 8],    # Can loop back to optimize/deploy or move forward
+            10: [11, 7, 8, 9], # Can loop back for improvements
+            11: [7, 10]       # Can loop back for optimizations or monitoring
         },
         'research': {
-            1: [2, 3, 4],     # Can skip multiple layers for research projects
-            2: [1, 3, 4, 5],  # More flexible transitions
-            3: [1, 2, 4, 5],
-            4: [1, 2, 3, 5],
-            5: [1, 2, 3, 4]   # Can restart from any point
+            0: [1, 2],        # Can skip task definition for research projects
+            1: [0, 2, 3, 4],  # More flexible transitions 
+            2: [1, 3, 4, 5],  # Can move in multiple directions
+            3: [1, 2, 4, 5, 6],
+            4: [2, 3, 5, 6, 7],
+            5: [3, 4, 6, 7, 8],
+            6: [4, 5, 7, 8, 9],
+            7: [5, 6, 8, 9, 10],
+            8: [6, 7, 9, 10, 11],
+            9: [7, 8, 10, 11],
+            10: [7, 8, 9, 11],
+            11: [7, 8, 9, 10]  # Can restart from multiple points
         },
         'security_focused': {
-            1: [2],
-            2: [3, 4],        # Can skip development for security assessment
-            3: [4, 2],        # Loop between structure and security
-            4: [5, 3, 2],     # Security concerns can send back to earlier layers
-            5: [4]            # Final validation can require security review
-        },
-        'iterative_development': {
+            0: [1],
             1: [2],
             2: [3],
-            3: [3, 4],        # Can repeat development layer
-            4: [3, 5],        # Can return to development from optimization
-            5: [3, 4]         # Can iterate on final product
+            3: [4],
+            4: [5, 6],        # Can skip development for security assessment
+            5: [6, 3, 4],     # Loop between development and prototyping
+            6: [7, 5, 4],     # Security concerns can send back to earlier layers
+            7: [8, 6, 5],     # Security optimization can require dev changes
+            8: [9, 7, 6],     # Deployment prep may need security fixes
+            9: [10, 7, 8],    # Documentation may need security updates
+            10: [11, 7],      # Monitoring setup may reveal security issues
+            11: [7, 10]       # Maintenance may require security updates
+        },
+        'iterative_development': {
+            0: [1],
+            1: [2],
+            2: [3],
+            3: [4],
+            4: [5],
+            5: [5, 6],        # Can repeat development layer
+            6: [5, 7],        # Can return to development based on testing
+            7: [5, 6, 8],     # Can return to development or testing from optimization
+            8: [7, 9],        # Can return to optimization from deployment prep
+            9: [5, 7, 8, 10], # Can loop back for improvements
+            10: [7, 11],      # Can return to optimization based on monitoring
+            11: [5, 7, 10]    # Can iterate on maintenance
         }
     }
     
@@ -801,6 +998,21 @@ class ProprietaryEvaluation:
     
     # Layer-specific evaluation criteria
     LAYER_CRITERIA = {
+        0: {  # Requirement Validation
+            'criteria': [
+                'stakeholder_validation',
+                'requirement_completeness',
+                'feasibility_assessment',
+                'acceptance_criteria_clarity',
+                'constraint_identification'
+            ],
+            'dimension_weights': {
+                'quality': 0.35,
+                'completeness': 0.30,
+                'clarity': 0.25,
+                'efficiency': 0.10
+            }
+        },
         1: {  # Task Definition
             'criteria': [
                 'requirement_clarity',
@@ -818,7 +1030,24 @@ class ProprietaryEvaluation:
                 'usability': 0.15
             }
         },
-        2: {  # Refinement
+        2: {  # Analysis & Research
+            'criteria': [
+                'market_analysis_depth',
+                'competitor_evaluation',
+                'technology_assessment',
+                'feasibility_validation',
+                'risk_identification'
+            ],
+            'dimension_weights': {
+                'completeness': 0.25,
+                'correctness': 0.30,
+                'efficiency': 0.10,
+                'innovation': 0.20,  # Higher importance for research
+                'maintainability': 0.05,
+                'usability': 0.10
+            }
+        },
+        3: {  # Refinement
             'criteria': [
                 'architecture_soundness',
                 'technical_feasibility',
@@ -828,14 +1057,31 @@ class ProprietaryEvaluation:
             ],
             'dimension_weights': {
                 'completeness': 0.20,
-                'correctness': 0.35,  # More important for this layer
+                'correctness': 0.35,
                 'efficiency': 0.15,
                 'innovation': 0.15,
                 'maintainability': 0.10,
                 'usability': 0.05
             }
         },
-        3: {  # Development
+        4: {  # Prototyping
+            'criteria': [
+                'concept_validation',
+                'visual_representation',
+                'implementation_fidelity',
+                'user_feedback_collection',
+                'rapid_iteration'
+            ],
+            'dimension_weights': {
+                'completeness': 0.15,
+                'correctness': 0.20,
+                'efficiency': 0.10,
+                'innovation': 0.30,
+                'maintainability': 0.05,
+                'usability': 0.20
+            }
+        },
+        5: {  # Development
             'criteria': [
                 'code_functionality',
                 'api_implementation',
@@ -852,7 +1098,24 @@ class ProprietaryEvaluation:
                 'usability': 0.05
             }
         },
-        4: {  # Optimization
+        6: {  # Testing & Quality Assurance
+            'criteria': [
+                'test_coverage',
+                'edge_case_handling',
+                'integration_validation',
+                'security_testing',
+                'performance_testing'
+            ],
+            'dimension_weights': {
+                'completeness': 0.25,
+                'correctness': 0.40,
+                'efficiency': 0.15,
+                'innovation': 0.05,
+                'maintainability': 0.10,
+                'usability': 0.05
+            }
+        },
+        7: {  # Optimization
             'criteria': [
                 'performance_improvement',
                 'security_hardening',
@@ -863,13 +1126,30 @@ class ProprietaryEvaluation:
             'dimension_weights': {
                 'completeness': 0.15,
                 'correctness': 0.25,
-                'efficiency': 0.30,  # More important for this layer
+                'efficiency': 0.30,
                 'innovation': 0.10,
                 'maintainability': 0.15,
                 'usability': 0.05
             }
         },
-        5: {  # Final Output
+        8: {  # Deployment Preparation
+            'criteria': [
+                'infrastructure_configuration',
+                'ci_cd_pipeline_setup',
+                'environment_provisioning',
+                'deployment_automation',
+                'rollback_procedures'
+            ],
+            'dimension_weights': {
+                'completeness': 0.20,
+                'correctness': 0.30,
+                'efficiency': 0.25,
+                'innovation': 0.05,
+                'maintainability': 0.15,
+                'usability': 0.05
+            }
+        },
+        9: {  # Final Output
             'criteria': [
                 'documentation_quality',
                 'code_organization',
@@ -882,8 +1162,42 @@ class ProprietaryEvaluation:
                 'correctness': 0.15,
                 'efficiency': 0.10,
                 'innovation': 0.05,
-                'maintainability': 0.25,  # More important for this layer
+                'maintainability': 0.25,
                 'usability': 0.20
+            }
+        },
+        10: {  # Monitoring & Feedback
+            'criteria': [
+                'monitoring_coverage',
+                'analytics_implementation',
+                'feedback_collection_mechanisms',
+                'alerting_system_setup',
+                'dashboard_usability'
+            ],
+            'dimension_weights': {
+                'completeness': 0.20,
+                'correctness': 0.20,
+                'efficiency': 0.15,
+                'innovation': 0.10,
+                'maintainability': 0.15,
+                'usability': 0.20
+            }
+        },
+        11: {  # Evolution & Maintenance
+            'criteria': [
+                'maintenance_planning',
+                'roadmap_development',
+                'technical_debt_management',
+                'scalability_assessment',
+                'long_term_sustainability'
+            ],
+            'dimension_weights': {
+                'completeness': 0.15,
+                'correctness': 0.15,
+                'efficiency': 0.10,
+                'innovation': 0.15,
+                'maintainability': 0.35,
+                'usability': 0.10
             }
         }
     }
@@ -1418,6 +1732,26 @@ class HumanAICollaborationManager:
     
     # Layer-specific checkpoint configurations
     LAYER_CHECKPOINTS = {
+        0: {  # Requirement Validation
+            'default_checkpoints': [
+                {
+                    'type': 'guidance',
+                    'name': 'Stakeholder Requirement Guidance',
+                    'description': 'Human stakeholders provide initial guidance on requirements and constraints',
+                    'required_skills': ['domain_knowledge', 'stakeholder_management'],
+                    'position': 'before',  # Execute before layer processing
+                    'optional': False  # Required checkpoint
+                },
+                {
+                    'type': 'review',
+                    'name': 'Initial Validation Review',
+                    'description': 'Human reviews AI-validated requirements for completeness and accuracy',
+                    'required_skills': ['business_analysis', 'requirements_engineering'],
+                    'position': 'after',  # Execute after layer processing
+                    'optional': False  # Required checkpoint
+                }
+            ]
+        },
         1: {  # Task Definition
             'default_checkpoints': [
                 {
@@ -1438,7 +1772,27 @@ class HumanAICollaborationManager:
                 }
             ]
         },
-        2: {  # Refinement
+        2: {  # Analysis & Research
+            'default_checkpoints': [
+                {
+                    'type': 'guidance',
+                    'name': 'Research Focus Guidance',
+                    'description': 'Human provides guidance on research focus areas and priorities',
+                    'required_skills': ['market_research', 'competitive_analysis'],
+                    'position': 'before',  # Execute before layer processing
+                    'optional': True  # Optional checkpoint
+                },
+                {
+                    'type': 'review',
+                    'name': 'Research Findings Review',
+                    'description': 'Human reviews research findings and provides additional context',
+                    'required_skills': ['domain_expertise', 'technology_assessment'],
+                    'position': 'after',  # Execute after layer processing
+                    'optional': False  # Required checkpoint
+                }
+            ]
+        },
+        3: {  # Refinement
             'default_checkpoints': [
                 {
                     'type': 'decision',
@@ -1458,7 +1812,27 @@ class HumanAICollaborationManager:
                 }
             ]
         },
-        3: {  # Development
+        4: {  # Prototyping
+            'default_checkpoints': [
+                {
+                    'type': 'guidance',
+                    'name': 'Prototype Focus Guidance',
+                    'description': 'Human provides guidance on prototype focus areas and key features',
+                    'required_skills': ['product_design', 'user_experience'],
+                    'position': 'before',  # Execute before layer processing
+                    'optional': True  # Optional checkpoint
+                },
+                {
+                    'type': 'review',
+                    'name': 'Prototype Evaluation',
+                    'description': 'Human evaluates prototype functionality and provides feedback',
+                    'required_skills': ['usability_testing', 'product_design'],
+                    'position': 'after',  # Execute after layer processing
+                    'optional': False  # Required checkpoint
+                }
+            ]
+        },
+        5: {  # Development
             'default_checkpoints': [
                 {
                     'type': 'guidance',
@@ -1478,7 +1852,27 @@ class HumanAICollaborationManager:
                 }
             ]
         },
-        4: {  # Optimization
+        6: {  # Testing & Quality Assurance
+            'default_checkpoints': [
+                {
+                    'type': 'guidance',
+                    'name': 'Test Strategy Guidance',
+                    'description': 'Human provides guidance on testing strategy and focus areas',
+                    'required_skills': ['quality_assurance', 'test_planning'],
+                    'position': 'before',  # Execute before layer processing
+                    'optional': True  # Optional checkpoint
+                },
+                {
+                    'type': 'review',
+                    'name': 'Test Results Review',
+                    'description': 'Human reviews test results and identifies gaps in coverage',
+                    'required_skills': ['quality_assurance', 'test_analysis'],
+                    'position': 'after',  # Execute after layer processing
+                    'optional': False  # Required checkpoint
+                }
+            ]
+        },
+        7: {  # Optimization
             'default_checkpoints': [
                 {
                     'type': 'guidance',
@@ -1498,7 +1892,27 @@ class HumanAICollaborationManager:
                 }
             ]
         },
-        5: {  # Final Output
+        8: {  # Deployment Preparation
+            'default_checkpoints': [
+                {
+                    'type': 'guidance',
+                    'name': 'Infrastructure Strategy',
+                    'description': 'Human provides guidance on infrastructure and deployment approach',
+                    'required_skills': ['devops', 'cloud_architecture'],
+                    'position': 'before',  # Execute before layer processing
+                    'optional': True  # Optional checkpoint
+                },
+                {
+                    'type': 'review',
+                    'name': 'Deployment Readiness Review',
+                    'description': 'Human reviews deployment configuration and provides feedback',
+                    'required_skills': ['devops', 'infrastructure_management'],
+                    'position': 'after',  # Execute after layer processing
+                    'optional': False  # Required checkpoint
+                }
+            ]
+        },
+        9: {  # Final Output
             'default_checkpoints': [
                 {
                     'type': 'extension',
@@ -1513,6 +1927,46 @@ class HumanAICollaborationManager:
                     'name': 'Final Deliverable Review',
                     'description': 'Human conducts final review of complete project deliverables',
                     'required_skills': ['project_management', 'quality_assurance'],
+                    'position': 'after',  # Execute after layer processing
+                    'optional': False  # Required checkpoint
+                }
+            ]
+        },
+        10: {  # Monitoring & Feedback
+            'default_checkpoints': [
+                {
+                    'type': 'guidance',
+                    'name': 'Monitoring Requirements',
+                    'description': 'Human provides guidance on monitoring requirements and metrics',
+                    'required_skills': ['system_monitoring', 'analytics'],
+                    'position': 'before',  # Execute before layer processing
+                    'optional': True  # Optional checkpoint
+                },
+                {
+                    'type': 'review',
+                    'name': 'Monitoring Setup Review',
+                    'description': 'Human reviews monitoring configuration and provides feedback',
+                    'required_skills': ['devops', 'system_monitoring'],
+                    'position': 'after',  # Execute after layer processing
+                    'optional': False  # Required checkpoint
+                }
+            ]
+        },
+        11: {  # Evolution & Maintenance
+            'default_checkpoints': [
+                {
+                    'type': 'guidance',
+                    'name': 'Maintenance Strategy',
+                    'description': 'Human provides guidance on maintenance approach and roadmap',
+                    'required_skills': ['product_management', 'technical_planning'],
+                    'position': 'before',  # Execute before layer processing
+                    'optional': True  # Optional checkpoint
+                },
+                {
+                    'type': 'review',
+                    'name': 'Maintenance Plan Review',
+                    'description': 'Human reviews maintenance plan and provides feedback',
+                    'required_skills': ['support_management', 'technical_debt_management'],
                     'position': 'after',  # Execute after layer processing
                     'optional': False  # Required checkpoint
                 }
