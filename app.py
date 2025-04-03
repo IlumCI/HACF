@@ -170,12 +170,30 @@ def project_detail(project_id):
 
 @app.route('/create_project', methods=['POST'])
 def create_project():
-    title = request.form.get('title')
-    description = request.form.get('description', '')
+    # Handle both form data and JSON data
+    if request.is_json:
+        data = request.json
+        title = data.get('title')
+        description = data.get('description', '')
+        project_type = data.get('project_type', 'web-app')
+        tech_stack = data.get('tech_stack', 'auto')
+        priority = data.get('priority', 'quality')
+    else:
+        title = request.form.get('title')
+        description = request.form.get('description', '')
+        project_type = request.form.get('project_type', 'web-app')
+        tech_stack = request.form.get('tech_stack', 'auto')
+        priority = request.form.get('priority', 'quality')
     
     if not title:
-        # Flash an error message
-        return redirect(url_for('dashboard'))
+        if request.is_json:
+            return jsonify({
+                "status": "error",
+                "message": "Project title is required"
+            }), 400
+        else:
+            # Flash an error message
+            return redirect(url_for('dashboard'))
     
     # Create new project
     project = models.Project(
@@ -184,10 +202,25 @@ def create_project():
         created_at=datetime.datetime.utcnow()
     )
     
+    # Store project type and tech stack preferences in task_definition as JSON
+    project_metadata = {
+        "project_type": project_type,
+        "tech_stack": tech_stack,
+        "priority": priority
+    }
+    project.task_definition = json.dumps(project_metadata)
+    
     db.session.add(project)
     db.session.commit()
     
-    return redirect(url_for('project_detail', project_id=project.id))
+    if request.is_json:
+        return jsonify({
+            "status": "success",
+            "message": "Project created successfully",
+            "project_id": project.id
+        })
+    else:
+        return redirect(url_for('project_detail', project_id=project.id))
 
 @app.route('/edit_project/<int:project_id>', methods=['GET', 'POST'])
 def edit_project(project_id):

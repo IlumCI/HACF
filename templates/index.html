@@ -3,7 +3,7 @@
 {% block head %}
 <style>
     .chat-container {
-        max-height: 400px;
+        max-height: 500px;
         overflow-y: auto;
         margin-bottom: 15px;
         padding: 15px;
@@ -67,21 +67,284 @@
             transform: translateY(-5px);
         }
     }
+    
+    .hero-section {
+        padding: 3rem 0;
+        background: linear-gradient(135deg, #0d1117, #161b22);
+        border-radius: 10px;
+        margin-bottom: 2rem;
+    }
+    
+    .form-card {
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        transition: all 0.3s ease;
+    }
+    
+    .form-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+    }
+    
+    .form-header {
+        background: linear-gradient(135deg, #0d6efd, #0dcaf0);
+        padding: 1.5rem;
+        color: white;
+    }
+    
+    .tab-content {
+        padding: 2rem;
+    }
+    
+    .hacf-layer-badge {
+        display: inline-block;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        color: white;
+        text-align: center;
+        line-height: 30px;
+        font-weight: bold;
+        margin-right: 10px;
+    }
+    
+    .layer-1-badge {
+        background-color: #0d6efd;  /* primary */
+    }
+    
+    .layer-2-badge {
+        background-color: #0dcaf0;  /* info */
+    }
+    
+    .layer-3-badge {
+        background-color: #198754;  /* success */
+    }
+    
+    .layer-4-badge {
+        background-color: #ffc107;  /* warning */
+        color: #212529;
+    }
+    
+    .layer-5-badge {
+        background-color: #dc3545;  /* danger */
+    }
+    
+    .hacf-steps .nav-link {
+        padding: 0.75rem 1rem;
+        border-radius: 0;
+        color: var(--bs-body-color);
+        position: relative;
+    }
+    
+    .hacf-steps .nav-link.active {
+        background-color: transparent;
+        color: var(--bs-primary);
+        font-weight: bold;
+    }
+    
+    .hacf-steps .nav-link.active::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 3px;
+        background-color: var(--bs-primary);
+    }
+    
+    .features-list {
+        margin: 0;
+        padding: 0;
+        list-style-type: none;
+    }
+    
+    .features-list li {
+        padding: 8px 0;
+        display: flex;
+        align-items: center;
+    }
+    
+    .features-list li::before {
+        content: '✓';
+        color: var(--bs-success);
+        font-weight: bold;
+        margin-right: 10px;
+    }
 </style>
 {% endblock %}
 
 {% block content %}
+<!-- Hero Section -->
+<div class="hero-section text-center text-white">
+    <div class="container">
+        <h1 class="display-4 mb-3">Hierarchical AI Collaboration Framework</h1>
+        <p class="lead mb-4">Build powerful applications with a 5-layer AI framework that handles everything from task planning to final code deployment.</p>
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="d-flex justify-content-center">
+                    <span class="hacf-layer-badge layer-1-badge">1</span>
+                    <span class="hacf-layer-badge layer-2-badge">2</span>
+                    <span class="hacf-layer-badge layer-3-badge">3</span>
+                    <span class="hacf-layer-badge layer-4-badge">4</span>
+                    <span class="hacf-layer-badge layer-5-badge">5</span>
+                </div>
+                <div class="d-flex justify-content-between mt-2 text-white small">
+                    <span>Task Definition</span>
+                    <span>Refinement</span>
+                    <span>Development</span>
+                    <span>Optimization</span>
+                    <span>Final Output</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="row">
-    <div class="col-md-6">
+    <!-- Simplified Project Builder Form -->
+    <div class="col-lg-7">
+        <div class="card form-card mb-4">
+            <div class="form-header">
+                <h3>Project Builder</h3>
+                <p class="mb-0">Describe your project and let HACF handle the rest</p>
+            </div>
+            <div class="card-body">
+                <form id="project-builder-form">
+                    <div class="mb-3">
+                        <label for="project-title" class="form-label">Project Title</label>
+                        <input type="text" class="form-control" id="project-title" placeholder="My Amazing Web App">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="project-description" class="form-label">Project Description</label>
+                        <textarea class="form-control" id="project-description" rows="3" 
+                            placeholder="Describe what you want to build in detail. Include features, functionality, and any specific requirements."></textarea>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="project-type" class="form-label">Project Type</label>
+                            <select class="form-select" id="project-type">
+                                <option value="web-app">Web Application</option>
+                                <option value="mobile-app">Mobile App</option>
+                                <option value="desktop-app">Desktop Application</option>
+                                <option value="api">API / Backend Service</option>
+                                <option value="data-analysis">Data Analysis Tool</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="tech-stack" class="form-label">Preferred Technologies</label>
+                            <select class="form-select" id="tech-stack">
+                                <option value="auto">Auto-select Best Fit</option>
+                                <option value="js-react">JavaScript (React)</option>
+                                <option value="js-vue">JavaScript (Vue)</option>
+                                <option value="python-flask">Python (Flask)</option>
+                                <option value="python-django">Python (Django)</option>
+                                <option value="other">Other (specify in description)</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label d-block">Priority (select one)</label>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="priority" id="priority-speed" value="speed" checked>
+                            <label class="form-check-label" for="priority-speed">Speed</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="priority" id="priority-quality" value="quality">
+                            <label class="form-check-label" for="priority-quality">Quality</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="priority" id="priority-security" value="security">
+                            <label class="form-check-label" for="priority-security">Security</label>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="button" id="generate-project-btn" class="btn btn-primary btn-lg">Generate Project</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- HACF Process Steps -->
         <div class="card mb-4">
             <div class="card-header">
-                <h4>Chatbot Interface</h4>
+                <h4>How It Works: The HACF Process</h4>
+            </div>
+            <div class="card-body">
+                <ul class="nav hacf-steps mb-3" id="hacf-process-tabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="step1-tab" data-bs-toggle="tab" data-bs-target="#step1" type="button" role="tab" aria-controls="step1" aria-selected="true">
+                            <span class="hacf-layer-badge layer-1-badge">1</span> Task Definition
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="step2-tab" data-bs-toggle="tab" data-bs-target="#step2" type="button" role="tab" aria-controls="step2" aria-selected="false">
+                            <span class="hacf-layer-badge layer-2-badge">2</span> Refinement
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="step3-tab" data-bs-toggle="tab" data-bs-target="#step3" type="button" role="tab" aria-controls="step3" aria-selected="false">
+                            <span class="hacf-layer-badge layer-3-badge">3</span> Development
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="step4-tab" data-bs-toggle="tab" data-bs-target="#step4" type="button" role="tab" aria-controls="step4" aria-selected="false">
+                            <span class="hacf-layer-badge layer-4-badge">4</span> Optimization
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="step5-tab" data-bs-toggle="tab" data-bs-target="#step5" type="button" role="tab" aria-controls="step5" aria-selected="false">
+                            <span class="hacf-layer-badge layer-5-badge">5</span> Final Output
+                        </button>
+                    </li>
+                </ul>
+                <div class="tab-content" id="hacf-process-tab-content">
+                    <div class="tab-pane fade show active" id="step1" role="tabpanel" aria-labelledby="step1-tab">
+                        <h5>Task Definition & Planning Layer</h5>
+                        <p>Uses <strong>meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo</strong> to convert your project requirements into a structured plan.</p>
+                        <p>This layer analyzes your inputs and creates a detailed roadmap with clear features and objectives.</p>
+                    </div>
+                    <div class="tab-pane fade" id="step2" role="tabpanel" aria-labelledby="step2-tab">
+                        <h5>Refinement & Base Structure Layer</h5>
+                        <p>Uses <strong>deepseek-reasoner</strong> to convert the high-level plan into a technical specification.</p>
+                        <p>This layer selects optimal frameworks, libraries, and database structures for your project.</p>
+                    </div>
+                    <div class="tab-pane fade" id="step3" role="tabpanel" aria-labelledby="step3-tab">
+                        <h5>Development & Execution Layer</h5>
+                        <p>Uses <strong>codestral-latest</strong> or <strong>claude-3-7-sonnet</strong> to generate the actual code implementation.</p>
+                        <p>This layer creates working frontend and backend components based on the technical specification.</p>
+                    </div>
+                    <div class="tab-pane fade" id="step4" role="tabpanel" aria-labelledby="step4-tab">
+                        <h5>Debugging, Optimization & Security Layer</h5>
+                        <p>Uses <strong>gpt-4o</strong> to review, debug, and optimize the generated code.</p>
+                        <p>This layer ensures the code is secure, performant, and follows best practices.</p>
+                    </div>
+                    <div class="tab-pane fade" id="step5" role="tabpanel" aria-labelledby="step5-tab">
+                        <h5>Final Output Layer</h5>
+                        <p>Processes, formats, and prepares the final code for download.</p>
+                        <p>This layer packages everything into downloadable files ready for deployment.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Chat Interface -->
+    <div class="col-lg-5">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h4>HACF Assistant</h4>
             </div>
             <div class="card-body">
                 <div class="chat-container" id="chat-container">
                     <div class="message-row">
                         <div class="message bot-message">
-                            Hello! I'm your AI assistant powered by the Hierarchical AI Collaboration Framework. How can I help you today?
+                            Hello! I'm your AI assistant powered by the Hierarchical AI Collaboration Framework. I can help you build applications through our 5-layer process. How can I help you today?
                         </div>
                     </div>
                     <!-- Chat messages will be added here dynamically -->
@@ -99,47 +362,50 @@
                 </div>
             </div>
         </div>
-    </div>
-    
-    <div class="col-md-6">
+        
+        <!-- Features List -->
         <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h4>HACF Project Builder</h4>
-                <button class="btn btn-sm btn-outline-secondary" id="toggle-hacf-btn">Show/Hide</button>
+            <div class="card-header">
+                <h4>Key Features</h4>
             </div>
-            <div class="card-body" id="hacf-container">
-                <!-- Task Definition & Planning Layer -->
-                <div class="section mb-4">
-                    <h5>Task Definition & Planning</h5>
-                    <textarea id="task-input" class="form-control mb-2" placeholder="Enter task description"></textarea>
-                    <button onclick="defineTask()" class="btn btn-primary w-100">Define Task</button>
-                    <div id="task-output" class="output mt-2 p-2 border rounded bg-dark"></div>
+            <div class="card-body">
+                <ul class="features-list">
+                    <li>Multi-layer AI collaboration for optimized results</li>
+                    <li>Specialized AI models for each development stage</li>
+                    <li>Comprehensive project management dashboard</li>
+                    <li>Visual file explorer and code preview</li>
+                    <li>Multiple export options (ZIP, GitHub, JSON)</li>
+                    <li>Real-time code optimization and security checks</li>
+                    <li>Detailed analytics and progress tracking</li>
+                    <li>Collaborative project editing capabilities</li>
+                </ul>
+                <div class="d-grid gap-2 mt-3">
+                    <a href="/dashboard" class="btn btn-outline-primary">View Your Projects</a>
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
 
-                <!-- Refinement & Base Structure Layer -->
-                <div class="section mb-4">
-                    <h5>Refinement & Base Structure</h5>
-                    <div id="refine-output" class="output p-2 border rounded bg-dark"></div>
+<!-- Processing Modal -->
+<div class="modal fade" id="processing-modal" tabindex="-1" aria-labelledby="processing-modal-label" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="processing-modal-label">Generating Your Project</h5>
+            </div>
+            <div class="modal-body text-center">
+                <div class="mb-3">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
                 </div>
-
-                <!-- Development & Execution Layer -->
-                <div class="section mb-4">
-                    <h5>Development & Execution</h5>
-                    <div id="develop-output" class="output p-2 border rounded bg-dark"></div>
+                <h5 id="current-layer-text">Layer 1: Task Definition & Planning</h5>
+                <div class="progress mb-3">
+                    <div id="progress-bar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 20%;" aria-valuenow="20" aria-valuemin="0" aria-valuemax="100">20%</div>
                 </div>
-
-                <!-- Debugging, Optimization & Security Layer -->
-                <div class="section mb-4">
-                    <h5>Debugging, Optimization & Security</h5>
-                    <div id="optimize-output" class="output p-2 border rounded bg-dark"></div>
-                </div>
-
-                <!-- Final Output Layer -->
-                <div class="section">
-                    <h5>Final Output</h5>
-                    <button onclick="generateDownload()" class="btn btn-success w-100">Download Project</button>
-                    <div id="final-output" class="output mt-2 p-2 border rounded bg-dark"></div>
-                </div>
+                <p id="processing-status">Analyzing your project requirements...</p>
+                <p class="text-muted small">This may take a few minutes. Each layer of the HACF framework requires thorough processing to ensure high-quality results.</p>
             </div>
         </div>
     </div>
@@ -149,19 +415,5 @@
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/hacf.js') }}"></script>
 <script src="{{ url_for('static', filename='js/chatbot.js') }}"></script>
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Toggle HACF section
-        const toggleBtn = document.getElementById('toggle-hacf-btn');
-        const hacfContainer = document.getElementById('hacf-container');
-        
-        toggleBtn.addEventListener('click', function() {
-            if (hacfContainer.style.display === 'none') {
-                hacfContainer.style.display = 'block';
-            } else {
-                hacfContainer.style.display = 'none';
-            }
-        });
-    });
-</script>
+<script src="{{ url_for('static', filename='js/project-builder.js') }}"></script>
 {% endblock %}
