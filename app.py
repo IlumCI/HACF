@@ -211,6 +211,21 @@ def dashboard():
         projects = models.Project.query.filter_by(user_id=current_user.id).all()
     return render_template('dashboard.html', projects=projects)
 
+@app.route('/documentation')
+@login_required
+def documentation():
+    """
+    Display comprehensive technical documentation about the HACF framework:
+    - Detailed explanation of all 12 layers
+    - AI model integration details
+    - Transition networks
+    - Industry specialization
+    - Cross-layer memory
+    - API integration
+    - Implementation guide
+    """
+    return render_template('documentation.html')
+
 @app.route('/analytics')
 @login_required
 def analytics():

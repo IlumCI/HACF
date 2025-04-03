@@ -1,0 +1,1985 @@
+{% extends "base.html" %}
+
+{% block title %}HACF Documentation{% endblock %}
+
+{% block head %}
+<style>
+    .documentation-section {
+        margin-bottom: 3rem;
+    }
+    
+    .layer-card {
+        transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+        margin-bottom: 1.5rem;
+        height: 100%;
+    }
+    
+    .layer-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+    }
+    
+    .layer-card .card-header {
+        font-weight: bold;
+    }
+    
+    .hacf-diagram {
+        max-width: 100%;
+        height: auto;
+        margin: 2rem 0;
+    }
+    
+    .code-block {
+        background-color: var(--bs-dark);
+        border-radius: 0.5rem;
+        padding: 1.5rem;
+        margin: 1.5rem 0;
+    }
+    
+    .docs-toc {
+        position: sticky;
+        top: 2rem;
+    }
+    
+    .timeline-container {
+        position: relative;
+        padding-left: 40px;
+        margin-bottom: 2rem;
+    }
+    
+    .timeline-item {
+        position: relative;
+        margin-bottom: 2rem;
+    }
+    
+    .timeline-item::before {
+        content: '';
+        position: absolute;
+        left: -30px;
+        top: 0;
+        height: 100%;
+        width: 2px;
+        background-color: var(--bs-primary);
+    }
+    
+    .timeline-item::after {
+        content: '';
+        position: absolute;
+        left: -37px;
+        top: 0;
+        height: 14px;
+        width: 14px;
+        border-radius: 50%;
+        background-color: var(--bs-primary);
+    }
+    
+    .ai-model-badge {
+        padding: 0.5rem 0.75rem;
+        border-radius: 0.5rem;
+        margin-right: 0.5rem;
+        margin-bottom: 0.5rem;
+        display: inline-block;
+        font-size: 0.85rem;
+    }
+    
+    .llama {
+        background-color: #6610f2;
+        color: white;
+    }
+    
+    .deepseek {
+        background-color: #0dcaf0;
+        color: black;
+    }
+    
+    .codestral {
+        background-color: #198754;
+        color: white;
+    }
+    
+    .claude {
+        background-color: #ffc107;
+        color: black;
+    }
+    
+    .gpt {
+        background-color: #dc3545;
+        color: white;
+    }
+    
+    /* Interactive Pyramid */
+    #hacf-pyramid {
+        position: relative;
+        margin: 3rem auto;
+        max-width: 700px;
+    }
+    
+    .pyramid-layer {
+        position: relative;
+        margin: 0 auto;
+        height: 50px;
+        background-color: var(--bs-primary);
+        border-radius: 5px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: bold;
+        cursor: pointer;
+        transition: background-color 0.3s, transform 0.3s;
+        z-index: 10;
+        margin-bottom: 8px;
+    }
+    
+    .pyramid-layer:hover {
+        transform: scale(1.05);
+    }
+    
+    .pyramid-layer.active {
+        background-color: var(--bs-success);
+    }
+    
+    .layer-details {
+        display: none;
+        padding: 1.5rem;
+        border-radius: 0.5rem;
+        background-color: var(--bs-dark);
+        margin-top: 1rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    }
+    
+    .layer-details.show {
+        display: block;
+    }
+    
+    .tab-content {
+        border: 1px solid var(--bs-gray-700);
+        border-top: none;
+        padding: 1.5rem;
+        border-radius: 0 0 0.5rem 0.5rem;
+    }
+    
+    /* Transition network visualization */
+    .network-visualization {
+        border: 1px solid var(--bs-gray-700);
+        border-radius: 0.5rem;
+        padding: 1.5rem;
+        margin-top: 2rem;
+    }
+    
+    .network-node {
+        height: 60px;
+        width: 60px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        margin: 0 auto;
+        position: relative;
+    }
+    
+    .network-edge {
+        position: absolute;
+        height: 2px;
+        background-color: var(--bs-gray-600);
+        transform-origin: left center;
+    }
+    
+    .network-edge.active {
+        background-color: var(--bs-success);
+    }
+    
+    /* Animation classes */
+    .fade-in {
+        animation: fadeIn 1s ease-in-out;
+    }
+    
+    @keyframes fadeIn {
+        0% { opacity: 0; }
+        100% { opacity: 1; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-5">
+    <div class="row">
+        <!-- Sidebar Navigation -->
+        <div class="col-md-3">
+            <div class="docs-toc">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Documentation Contents</h5>
+                    </div>
+                    <div class="card-body">
+                        <nav id="docs-navbar" class="nav flex-column">
+                            <a class="nav-link" href="#introduction">Introduction</a>
+                            <a class="nav-link" href="#architecture">Architecture Overview</a>
+                            <a class="nav-link" href="#layer-structure">Layer Structure</a>
+                            <a class="nav-link ms-3" href="#layer-0">Layer 0: Requirement Validation</a>
+                            <a class="nav-link ms-3" href="#layer-1">Layer 1: Task Definition</a>
+                            <a class="nav-link ms-3" href="#layer-2">Layer 2: Analysis & Research</a>
+                            <a class="nav-link ms-3" href="#layer-3">Layer 3: Refinement</a>
+                            <a class="nav-link ms-3" href="#layer-4">Layer 4: Prototyping</a>
+                            <a class="nav-link ms-3" href="#layer-5">Layer 5: Development</a>
+                            <a class="nav-link ms-3" href="#layer-6">Layer 6: Testing & QA</a>
+                            <a class="nav-link ms-3" href="#layer-7">Layer 7: Optimization</a>
+                            <a class="nav-link ms-3" href="#layer-8">Layer 8: Deployment Preparation</a>
+                            <a class="nav-link ms-3" href="#layer-9">Layer 9: Final Output</a>
+                            <a class="nav-link ms-3" href="#layer-10">Layer 10: Monitoring & Feedback</a>
+                            <a class="nav-link ms-3" href="#layer-11">Layer 11: Evolution & Maintenance</a>
+                            <a class="nav-link" href="#ai-models">AI Models Integration</a>
+                            <a class="nav-link" href="#transition-networks">Transition Networks</a>
+                            <a class="nav-link" href="#industry-specialization">Industry Specialization</a>
+                            <a class="nav-link" href="#cross-layer-memory">Cross-Layer Memory</a>
+                            <a class="nav-link" href="#api-integration">API Integration</a>
+                            <a class="nav-link" href="#implementation">Implementation Guide</a>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="col-md-9">
+            <div class="container">
+                <div class="documentation-section">
+                    <h1 class="display-4 mb-4" id="introduction">HACF Technical Documentation</h1>
+                    <p class="lead">
+                        The Hierarchical AI Collaboration Framework (HACF) is an advanced enterprise-ready system designed to orchestrate AI interactions across multiple layers, enabling complex problem-solving through hierarchical collaboration.
+                    </p>
+                    
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle-fill me-2"></i>
+                        <strong>Important:</strong> This documentation provides a comprehensive technical overview of the framework's architecture, components, and implementation details.
+                    </div>
+                </div>
+                
+                <!-- Interactive Pyramid -->
+                <div class="documentation-section">
+                    <h2 id="architecture">Interactive HACF Pyramid</h2>
+                    <p>Explore the HACF framework by clicking on different layers of the pyramid to view detailed information.</p>
+                    
+                    <div id="hacf-pyramid">
+                        <!-- Pyramid layers will be generated by JavaScript -->
+                    </div>
+                    
+                    <div id="layer-details-container"></div>
+                </div>
+                
+                <div class="documentation-section">
+                    <h2 id="layer-structure">Layer Structure</h2>
+                    <p>
+                        The HACF consists of 12 distinct layers, each with specific responsibilities and capabilities. Layers are organized in a hierarchical structure with bi-directional information flow and controlled transitions.
+                    </p>
+                    
+                    <div class="row row-cols-1 row-cols-md-2 g-4 mt-3">
+                        <!-- Layer 0 -->
+                        <div class="col">
+                            <div class="card layer-card" id="layer-0">
+                                <div class="card-header bg-primary text-white">
+                                    Layer 0: Requirement Validation
+                                </div>
+                                <div class="card-body">
+                                    <h5 class="card-title">Purpose</h5>
+                                    <p class="card-text">Validates user inputs and ensures requirements are clear, consistent, and feasible.</p>
+                                    
+                                    <h5 class="card-title">Capabilities</h5>
+                                    <ul>
+                                        <li>Input validation and sanitization</li>
+                                        <li>Requirements feasibility assessment</li>
+                                        <li>Clarification request generation</li>
+                                        <li>Conflict detection and resolution</li>
+                                    </ul>
+                                    
+                                    <div class="mt-3">
+                                        <span class="ai-model-badge llama">Meta-Llama-3.1</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Layer 1 -->
+                        <div class="col">
+                            <div class="card layer-card" id="layer-1">
+                                <div class="card-header bg-primary text-white">
+                                    Layer 1: Task Definition
+                                </div>
+                                <div class="card-body">
+                                    <h5 class="card-title">Purpose</h5>
+                                    <p class="card-text">Decomposes requirements into actionable tasks and creates structured workflows.</p>
+                                    
+                                    <h5 class="card-title">Capabilities</h5>
+                                    <ul>
+                                        <li>Task decomposition</li>
+                                        <li>Dependency mapping</li>
+                                        <li>Resource estimation</li>
+                                        <li>Priority assignment</li>
+                                        <li>Timeline creation</li>
+                                    </ul>
+                                    
+                                    <div class="mt-3">
+                                        <span class="ai-model-badge llama">Meta-Llama-3.1</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Layer 2 -->
+                        <div class="col">
+                            <div class="card layer-card" id="layer-2">
+                                <div class="card-header bg-info text-dark">
+                                    Layer 2: Analysis & Research
+                                </div>
+                                <div class="card-body">
+                                    <h5 class="card-title">Purpose</h5>
+                                    <p class="card-text">Conducts in-depth research on required technologies, methodologies, and domain knowledge.</p>
+                                    
+                                    <h5 class="card-title">Capabilities</h5>
+                                    <ul>
+                                        <li>Technology stack assessment</li>
+                                        <li>Industry best practices research</li>
+                                        <li>Competitive analysis</li>
+                                        <li>Technical feasibility studies</li>
+                                        <li>Knowledge gap identification</li>
+                                    </ul>
+                                    
+                                    <div class="mt-3">
+                                        <span class="ai-model-badge deepseek">DeepSeek-Reasoner</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Layer 3 -->
+                        <div class="col">
+                            <div class="card layer-card" id="layer-3">
+                                <div class="card-header bg-info text-dark">
+                                    Layer 3: Refinement
+                                </div>
+                                <div class="card-body">
+                                    <h5 class="card-title">Purpose</h5>
+                                    <p class="card-text">Refines and consolidates research findings into actionable architectural decisions.</p>
+                                    
+                                    <h5 class="card-title">Capabilities</h5>
+                                    <ul>
+                                        <li>Requirement prioritization</li>
+                                        <li>Design pattern selection</li>
+                                        <li>Architecture optimization</li>
+                                        <li>Risk assessment</li>
+                                        <li>Technical constraint adaptation</li>
+                                    </ul>
+                                    
+                                    <div class="mt-3">
+                                        <span class="ai-model-badge deepseek">DeepSeek-Reasoner</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Layer 4 -->
+                        <div class="col">
+                            <div class="card layer-card" id="layer-4">
+                                <div class="card-header bg-success text-white">
+                                    Layer 4: Prototyping
+                                </div>
+                                <div class="card-body">
+                                    <h5 class="card-title">Purpose</h5>
+                                    <p class="card-text">Creates rapid prototypes and proof-of-concepts to validate design decisions.</p>
+                                    
+                                    <h5 class="card-title">Capabilities</h5>
+                                    <ul>
+                                        <li>UI/UX mockup generation</li>
+                                        <li>Functional prototype creation</li>
+                                        <li>API schema design</li>
+                                        <li>Component interaction modeling</li>
+                                        <li>Technical feasibility validation</li>
+                                    </ul>
+                                    
+                                    <div class="mt-3">
+                                        <span class="ai-model-badge codestral">Codestral</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Layer 5 -->
+                        <div class="col">
+                            <div class="card layer-card" id="layer-5">
+                                <div class="card-header bg-success text-white">
+                                    Layer 5: Development
+                                </div>
+                                <div class="card-body">
+                                    <h5 class="card-title">Purpose</h5>
+                                    <p class="card-text">Implements the full solution based on validated prototypes and architectural decisions.</p>
+                                    
+                                    <h5 class="card-title">Capabilities</h5>
+                                    <ul>
+                                        <li>Code generation</li>
+                                        <li>Component integration</li>
+                                        <li>Database schema implementation</li>
+                                        <li>Business logic implementation</li>
+                                        <li>API endpoint development</li>
+                                    </ul>
+                                    
+                                    <div class="mt-3">
+                                        <span class="ai-model-badge codestral">Codestral</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Layer 6 -->
+                        <div class="col">
+                            <div class="card layer-card" id="layer-6">
+                                <div class="card-header bg-warning text-dark">
+                                    Layer 6: Testing & QA
+                                </div>
+                                <div class="card-body">
+                                    <h5 class="card-title">Purpose</h5>
+                                    <p class="card-text">Ensures solution quality through comprehensive testing strategies and bug identification.</p>
+                                    
+                                    <h5 class="card-title">Capabilities</h5>
+                                    <ul>
+                                        <li>Unit test generation</li>
+                                        <li>Integration test design</li>
+                                        <li>Performance testing</li>
+                                        <li>Security vulnerability assessment</li>
+                                        <li>Regression test creation</li>
+                                    </ul>
+                                    
+                                    <div class="mt-3">
+                                        <span class="ai-model-badge claude">Claude-3</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Layer 7 -->
+                        <div class="col">
+                            <div class="card layer-card" id="layer-7">
+                                <div class="card-header bg-danger text-white">
+                                    Layer 7: Optimization
+                                </div>
+                                <div class="card-body">
+                                    <h5 class="card-title">Purpose</h5>
+                                    <p class="card-text">Enhances solution performance, efficiency, and resource utilization.</p>
+                                    
+                                    <h5 class="card-title">Capabilities</h5>
+                                    <ul>
+                                        <li>Code refactoring</li>
+                                        <li>Performance bottleneck identification</li>
+                                        <li>Algorithm optimization</li>
+                                        <li>Resource usage minimization</li>
+                                        <li>Caching strategy implementation</li>
+                                    </ul>
+                                    
+                                    <div class="mt-3">
+                                        <span class="ai-model-badge gpt">GPT-4o</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Layer 8 -->
+                        <div class="col">
+                            <div class="card layer-card" id="layer-8">
+                                <div class="card-header bg-danger text-white">
+                                    Layer 8: Deployment Preparation
+                                </div>
+                                <div class="card-body">
+                                    <h5 class="card-title">Purpose</h5>
+                                    <p class="card-text">Prepares the solution for deployment with necessary documentation and deployment configurations.</p>
+                                    
+                                    <h5 class="card-title">Capabilities</h5>
+                                    <ul>
+                                        <li>Deployment script generation</li>
+                                        <li>Infrastructure configuration</li>
+                                        <li>Environment setup documentation</li>
+                                        <li>Rollback strategy definition</li>
+                                        <li>Release notes generation</li>
+                                    </ul>
+                                    
+                                    <div class="mt-3">
+                                        <span class="ai-model-badge gpt">GPT-4o</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Layer 9 -->
+                        <div class="col">
+                            <div class="card layer-card" id="layer-9">
+                                <div class="card-header bg-warning text-dark">
+                                    Layer 9: Final Output
+                                </div>
+                                <div class="card-body">
+                                    <h5 class="card-title">Purpose</h5>
+                                    <p class="card-text">Delivers the complete solution with comprehensive documentation and user guides.</p>
+                                    
+                                    <h5 class="card-title">Capabilities</h5>
+                                    <ul>
+                                        <li>Final package assembly</li>
+                                        <li>User documentation creation</li>
+                                        <li>API documentation generation</li>
+                                        <li>Technical specification compilation</li>
+                                        <li>Solution walkthrough preparation</li>
+                                    </ul>
+                                    
+                                    <div class="mt-3">
+                                        <span class="ai-model-badge claude">Claude-3</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Layer 10 -->
+                        <div class="col">
+                            <div class="card layer-card" id="layer-10">
+                                <div class="card-header bg-danger text-white">
+                                    Layer 10: Monitoring & Feedback
+                                </div>
+                                <div class="card-body">
+                                    <h5 class="card-title">Purpose</h5>
+                                    <p class="card-text">Collects user feedback and monitors solution performance in production environments.</p>
+                                    
+                                    <h5 class="card-title">Capabilities</h5>
+                                    <ul>
+                                        <li>Performance metric tracking</li>
+                                        <li>User feedback analysis</li>
+                                        <li>Error pattern identification</li>
+                                        <li>Usage pattern analysis</li>
+                                        <li>Improvement opportunity identification</li>
+                                    </ul>
+                                    
+                                    <div class="mt-3">
+                                        <span class="ai-model-badge gpt">GPT-4o</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Layer 11 -->
+                        <div class="col">
+                            <div class="card layer-card" id="layer-11">
+                                <div class="card-header bg-primary text-white">
+                                    Layer 11: Evolution & Maintenance
+                                </div>
+                                <div class="card-body">
+                                    <h5 class="card-title">Purpose</h5>
+                                    <p class="card-text">Ensures long-term solution sustainability through continuous improvement and adaptation.</p>
+                                    
+                                    <h5 class="card-title">Capabilities</h5>
+                                    <ul>
+                                        <li>Feature enhancement planning</li>
+                                        <li>Technology stack modernization</li>
+                                        <li>Technical debt management</li>
+                                        <li>Scalability improvement</li>
+                                        <li>Long-term maintenance strategy</li>
+                                    </ul>
+                                    
+                                    <div class="mt-3">
+                                        <span class="ai-model-badge llama">Meta-Llama-3.1</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="documentation-section">
+                    <h2 id="ai-models">AI Models Integration</h2>
+                    <p>
+                        The HACF leverages specific AI models for each layer, optimizing for the unique requirements and tasks of that layer. This strategic allocation of AI capabilities ensures maximum effectiveness across the framework.
+                    </p>
+                    
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Layer</th>
+                                <th>AI Model</th>
+                                <th>Strengths</th>
+                                <th>Implementation Details</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>0, 1, 11</td>
+                                <td><span class="ai-model-badge llama">Meta-Llama-3.1</span></td>
+                                <td>
+                                    <ul>
+                                        <li>Excellent context understanding</li>
+                                        <li>Strong reasoning capabilities</li>
+                                        <li>Efficient token utilization</li>
+                                    </ul>
+                                </td>
+                                <td>Implemented with 128k context window for handling complex requirements and historical project data</td>
+                            </tr>
+                            <tr>
+                                <td>2, 3</td>
+                                <td><span class="ai-model-badge deepseek">DeepSeek-Reasoner</span></td>
+                                <td>
+                                    <ul>
+                                        <li>Superior research capabilities</li>
+                                        <li>Complex problem decomposition</li>
+                                        <li>Multi-step reasoning</li>
+                                    </ul>
+                                </td>
+                                <td>Integrated with knowledge retrieval augmentation for accessing internal knowledge bases and technical documentation</td>
+                            </tr>
+                            <tr>
+                                <td>4, 5</td>
+                                <td><span class="ai-model-badge codestral">Codestral</span></td>
+                                <td>
+                                    <ul>
+                                        <li>Specialized for code generation</li>
+                                        <li>Strong understanding of software architecture</li>
+                                        <li>Optimal for technical implementations</li>
+                                    </ul>
+                                </td>
+                                <td>Enhanced with code repository integration for referencing existing codebases and maintaining consistent coding standards</td>
+                            </tr>
+                            <tr>
+                                <td>6, 9</td>
+                                <td><span class="ai-model-badge claude">Claude-3</span></td>
+                                <td>
+                                    <ul>
+                                        <li>Advanced text comprehension</li>
+                                        <li>Document creation capabilities</li>
+                                        <li>Detail-oriented processing</li>
+                                    </ul>
+                                </td>
+                                <td>Configured with template-based generation for maintaining consistent documentation formats and quality standards</td>
+                            </tr>
+                            <tr>
+                                <td>7, 8, 10</td>
+                                <td><span class="ai-model-badge gpt">GPT-4o</span></td>
+                                <td>
+                                    <ul>
+                                        <li>Versatile problem-solving</li>
+                                        <li>Strong optimization capabilities</li>
+                                        <li>Comprehensive understanding of systems</li>
+                                    </ul>
+                                </td>
+                                <td>Implemented with fine-tuning for performance optimization scenarios and specialized deployment configurations</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="documentation-section">
+                    <h2 id="transition-networks">Transition Networks</h2>
+                    <p>
+                        The HACF implements five distinct transition network types, each optimized for different project requirements and workflows. These networks define how information flows between layers and determine the sequencing of layer activations.
+                    </p>
+                    
+                    <ul class="nav nav-tabs" id="transitionTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="standard-tab" data-bs-toggle="tab" data-bs-target="#standard" type="button" role="tab" aria-controls="standard" aria-selected="true">Standard</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="agile-tab" data-bs-toggle="tab" data-bs-target="#agile" type="button" role="tab" aria-controls="agile" aria-selected="false">Agile</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="research-tab" data-bs-toggle="tab" data-bs-target="#research" type="button" role="tab" aria-controls="research" aria-selected="false">Research</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="security-tab" data-bs-toggle="tab" data-bs-target="#security" type="button" role="tab" aria-controls="security" aria-selected="false">Security-Focused</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="iterative-tab" data-bs-toggle="tab" data-bs-target="#iterative" type="button" role="tab" aria-controls="iterative" aria-selected="false">Iterative</button>
+                        </li>
+                    </ul>
+                    
+                    <div class="tab-content" id="transitionTabContent">
+                        <div class="tab-pane fade show active" id="standard" role="tabpanel" aria-labelledby="standard-tab">
+                            <h4>Standard Transition Network</h4>
+                            <p>The standard transition network follows a sequential progression through all layers, with limited feedback loops at critical junctures.</p>
+                            
+                            <h5>Characteristics:</h5>
+                            <ul>
+                                <li>Sequential progression from Layer 0 to Layer 11</li>
+                                <li>Validation checkpoints after Layers 3, 6, and 9</li>
+                                <li>Limited backward transitions for critical error correction</li>
+                                <li>Comprehensive documentation at each transition</li>
+                            </ul>
+                            
+                            <h5>Optimal Use Cases:</h5>
+                            <ul>
+                                <li>Well-defined projects with clear requirements</li>
+                                <li>Systems with predictable implementation paths</li>
+                                <li>Projects requiring comprehensive documentation</li>
+                            </ul>
+                            
+                            <div class="network-visualization" id="standard-network">
+                                <!-- Network visualization will be generated by JavaScript -->
+                            </div>
+                        </div>
+                        
+                        <div class="tab-pane fade" id="agile" role="tabpanel" aria-labelledby="agile-tab">
+                            <h4>Agile Transition Network</h4>
+                            <p>The agile transition network emphasizes rapid iteration with frequent feedback loops and parallel processing capabilities.</p>
+                            
+                            <h5>Characteristics:</h5>
+                            <ul>
+                                <li>Multiple entry points at Layers 0, 2, and 4</li>
+                                <li>Parallel processing of related components</li>
+                                <li>Frequent feedback loops between adjacent layers</li>
+                                <li>Sprint-based progression with incremental delivery</li>
+                            </ul>
+                            
+                            <h5>Optimal Use Cases:</h5>
+                            <ul>
+                                <li>Fast-paced development environments</li>
+                                <li>Projects with evolving requirements</li>
+                                <li>User-centric applications requiring frequent feedback</li>
+                            </ul>
+                            
+                            <div class="network-visualization" id="agile-network">
+                                <!-- Network visualization will be generated by JavaScript -->
+                            </div>
+                        </div>
+                        
+                        <div class="tab-pane fade" id="research" role="tabpanel" aria-labelledby="research-tab">
+                            <h4>Research Transition Network</h4>
+                            <p>The research transition network prioritizes thorough analysis and exploration with extended time in research-oriented layers.</p>
+                            
+                            <h5>Characteristics:</h5>
+                            <ul>
+                                <li>Extended processing in Layers 2 and 3</li>
+                                <li>Multiple feedback loops to requirement validation</li>
+                                <li>Exploratory branches for investigating alternatives</li>
+                                <li>Comprehensive documentation of research findings</li>
+                            </ul>
+                            
+                            <h5>Optimal Use Cases:</h5>
+                            <ul>
+                                <li>Novel technology implementations</li>
+                                <li>Complex problem domains requiring deep analysis</li>
+                                <li>Academic or research-oriented projects</li>
+                            </ul>
+                            
+                            <div class="network-visualization" id="research-network">
+                                <!-- Network visualization will be generated by JavaScript -->
+                            </div>
+                        </div>
+                        
+                        <div class="tab-pane fade" id="security" role="tabpanel" aria-labelledby="security-tab">
+                            <h4>Security-Focused Transition Network</h4>
+                            <p>The security-focused transition network implements additional validation and testing stages with comprehensive threat modeling.</p>
+                            
+                            <h5>Characteristics:</h5>
+                            <ul>
+                                <li>Security validation checkpoints after each layer</li>
+                                <li>Extended testing phase with security-specific scenarios</li>
+                                <li>Threat modeling integrated throughout development</li>
+                                <li>Mandatory security review before deployment</li>
+                            </ul>
+                            
+                            <h5>Optimal Use Cases:</h5>
+                            <ul>
+                                <li>Financial applications</li>
+                                <li>Healthcare systems with sensitive data</li>
+                                <li>Government or military applications</li>
+                            </ul>
+                            
+                            <div class="network-visualization" id="security-network">
+                                <!-- Network visualization will be generated by JavaScript -->
+                            </div>
+                        </div>
+                        
+                        <div class="tab-pane fade" id="iterative" role="tabpanel" aria-labelledby="iterative-tab">
+                            <h4>Iterative Transition Network</h4>
+                            <p>The iterative transition network focuses on continuous refinement with multiple passes through the layer structure.</p>
+                            
+                            <h5>Characteristics:</h5>
+                            <ul>
+                                <li>Multiple complete cycles through all layers</li>
+                                <li>Incremental scope expansion with each iteration</li>
+                                <li>Version-controlled outputs at each cycle</li>
+                                <li>Continuous integration of user feedback</li>
+                            </ul>
+                            
+                            <h5>Optimal Use Cases:</h5>
+                            <ul>
+                                <li>Long-term product development</li>
+                                <li>Systems requiring continuous improvement</li>
+                                <li>Projects with phased feature rollout</li>
+                            </ul>
+                            
+                            <div class="network-visualization" id="iterative-network">
+                                <!-- Network visualization will be generated by JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="documentation-section">
+                    <h2 id="industry-specialization">Industry Specialization</h2>
+                    <p>
+                        The HACF offers specialized configurations for different industries, optimizing layer behavior and transition networks for specific domain requirements.
+                    </p>
+                    
+                    <div class="accordion" id="industryAccordion">
+                        <!-- Healthcare Industry -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="healthcareHeading">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#healthcareCollapse" aria-expanded="false" aria-controls="healthcareCollapse">
+                                    Healthcare
+                                </button>
+                            </h2>
+                            <div id="healthcareCollapse" class="accordion-collapse collapse" aria-labelledby="healthcareHeading" data-bs-parent="#industryAccordion">
+                                <div class="accordion-body">
+                                    <h5>Key Specializations:</h5>
+                                    <ul>
+                                        <li>Enhanced security and privacy controls in all layers</li>
+                                        <li>HIPAA compliance validation integrated into Layers 0 and 6</li>
+                                        <li>Extended testing for patient safety scenarios</li>
+                                        <li>Specialized data validation for medical terminology</li>
+                                    </ul>
+                                    
+                                    <h5>Modified Layer Behavior:</h5>
+                                    <table class="table table-sm">
+                                        <thead>
+                                            <tr>
+                                                <th>Layer</th>
+                                                <th>Modification</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>0</td>
+                                                <td>Additional HIPAA compliance checking</td>
+                                            </tr>
+                                            <tr>
+                                                <td>2</td>
+                                                <td>Integration with medical knowledge bases</td>
+                                            </tr>
+                                            <tr>
+                                                <td>6</td>
+                                                <td>Extended testing for patient safety scenarios</td>
+                                            </tr>
+                                            <tr>
+                                                <td>8</td>
+                                                <td>PHI data handling protocols in deployment</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Financial Industry -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="financialHeading">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#financialCollapse" aria-expanded="false" aria-controls="financialCollapse">
+                                    Financial
+                                </button>
+                            </h2>
+                            <div id="financialCollapse" class="accordion-collapse collapse" aria-labelledby="financialHeading" data-bs-parent="#industryAccordion">
+                                <div class="accordion-body">
+                                    <h5>Key Specializations:</h5>
+                                    <ul>
+                                        <li>Enhanced security and fraud detection capabilities</li>
+                                        <li>Regulatory compliance validation (SOX, PCI-DSS, etc.)</li>
+                                        <li>Transaction integrity verification in testing</li>
+                                        <li>Audit trail generation throughout all layers</li>
+                                    </ul>
+                                    
+                                    <h5>Modified Layer Behavior:</h5>
+                                    <table class="table table-sm">
+                                        <thead>
+                                            <tr>
+                                                <th>Layer</th>
+                                                <th>Modification</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>0</td>
+                                                <td>Financial regulatory compliance checking</td>
+                                            </tr>
+                                            <tr>
+                                                <td>3</td>
+                                                <td>Enhanced security architecture considerations</td>
+                                            </tr>
+                                            <tr>
+                                                <td>6</td>
+                                                <td>Specific financial transaction testing scenarios</td>
+                                            </tr>
+                                            <tr>
+                                                <td>7</td>
+                                                <td>Performance optimization for high transaction volumes</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Education Industry -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="educationHeading">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#educationCollapse" aria-expanded="false" aria-controls="educationCollapse">
+                                    Education
+                                </button>
+                            </h2>
+                            <div id="educationCollapse" class="accordion-collapse collapse" aria-labelledby="educationHeading" data-bs-parent="#industryAccordion">
+                                <div class="accordion-body">
+                                    <h5>Key Specializations:</h5>
+                                    <ul>
+                                        <li>Accessibility compliance throughout all layers</li>
+                                        <li>Learning management system integration patterns</li>
+                                        <li>Enhanced content management capabilities</li>
+                                        <li>Student data privacy considerations</li>
+                                    </ul>
+                                    
+                                    <h5>Modified Layer Behavior:</h5>
+                                    <table class="table table-sm">
+                                        <thead>
+                                            <tr>
+                                                <th>Layer</th>
+                                                <th>Modification</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>1</td>
+                                                <td>Educational content organization patterns</td>
+                                            </tr>
+                                            <tr>
+                                                <td>4</td>
+                                                <td>Enhanced accessibility in UI prototyping</td>
+                                            </tr>
+                                            <tr>
+                                                <td>6</td>
+                                                <td>Testing across diverse learning scenarios</td>
+                                            </tr>
+                                            <tr>
+                                                <td>9</td>
+                                                <td>Comprehensive educator documentation</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Government Industry -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="governmentHeading">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#governmentCollapse" aria-expanded="false" aria-controls="governmentCollapse">
+                                    Government
+                                </button>
+                            </h2>
+                            <div id="governmentCollapse" class="accordion-collapse collapse" aria-labelledby="governmentHeading" data-bs-parent="#industryAccordion">
+                                <div class="accordion-body">
+                                    <h5>Key Specializations:</h5>
+                                    <ul>
+                                        <li>Compliance with government standards (NIST, FedRAMP, etc.)</li>
+                                        <li>Extended security controls and authorization frameworks</li>
+                                        <li>Accessibility requirements enforcement</li>
+                                        <li>Detailed audit logging and reporting</li>
+                                    </ul>
+                                    
+                                    <h5>Modified Layer Behavior:</h5>
+                                    <table class="table table-sm">
+                                        <thead>
+                                            <tr>
+                                                <th>Layer</th>
+                                                <th>Modification</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>0</td>
+                                                <td>Government regulation compliance verification</td>
+                                            </tr>
+                                            <tr>
+                                                <td>3</td>
+                                                <td>Extended security architecture planning</td>
+                                            </tr>
+                                            <tr>
+                                                <td>8</td>
+                                                <td>Government-specific deployment considerations</td>
+                                            </tr>
+                                            <tr>
+                                                <td>10</td>
+                                                <td>Enhanced audit capabilities for monitoring</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Retail Industry -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="retailHeading">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#retailCollapse" aria-expanded="false" aria-controls="retailCollapse">
+                                    Retail
+                                </button>
+                            </h2>
+                            <div id="retailCollapse" class="accordion-collapse collapse" aria-labelledby="retailHeading" data-bs-parent="#industryAccordion">
+                                <div class="accordion-body">
+                                    <h5>Key Specializations:</h5>
+                                    <ul>
+                                        <li>Enhanced e-commerce functionality</li>
+                                        <li>Inventory and supply chain integration</li>
+                                        <li>Customer experience optimization</li>
+                                        <li>Multi-channel capabilities</li>
+                                    </ul>
+                                    
+                                    <h5>Modified Layer Behavior:</h5>
+                                    <table class="table table-sm">
+                                        <thead>
+                                            <tr>
+                                                <th>Layer</th>
+                                                <th>Modification</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>2</td>
+                                                <td>Integration with retail systems and POS</td>
+                                            </tr>
+                                            <tr>
+                                                <td>4</td>
+                                                <td>Enhanced UI/UX for customer experience</td>
+                                            </tr>
+                                            <tr>
+                                                <td>7</td>
+                                                <td>Performance optimization for high traffic</td>
+                                            </tr>
+                                            <tr>
+                                                <td>10</td>
+                                                <td>Customer behavior analytics integration</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Manufacturing Industry -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="manufacturingHeading">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#manufacturingCollapse" aria-expanded="false" aria-controls="manufacturingCollapse">
+                                    Manufacturing
+                                </button>
+                            </h2>
+                            <div id="manufacturingCollapse" class="accordion-collapse collapse" aria-labelledby="manufacturingHeading" data-bs-parent="#industryAccordion">
+                                <div class="accordion-body">
+                                    <h5>Key Specializations:</h5>
+                                    <ul>
+                                        <li>Industrial IoT integration capabilities</li>
+                                        <li>Real-time monitoring and alerting</li>
+                                        <li>Supply chain and inventory optimization</li>
+                                        <li>Equipment maintenance scheduling</li>
+                                    </ul>
+                                    
+                                    <h5>Modified Layer Behavior:</h5>
+                                    <table class="table table-sm">
+                                        <thead>
+                                            <tr>
+                                                <th>Layer</th>
+                                                <th>Modification</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>2</td>
+                                                <td>Industrial system integration research</td>
+                                            </tr>
+                                            <tr>
+                                                <td>5</td>
+                                                <td>Real-time data processing capabilities</td>
+                                            </tr>
+                                            <tr>
+                                                <td>7</td>
+                                                <td>Optimization for industrial environments</td>
+                                            </tr>
+                                            <tr>
+                                                <td>11</td>
+                                                <td>Equipment lifecycle maintenance planning</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="documentation-section">
+                    <h2 id="cross-layer-memory">Cross-Layer Memory</h2>
+                    <p>
+                        The HACF implements a sophisticated cross-layer memory system that enables information sharing and context preservation across different layers of the framework.
+                    </p>
+                    
+                    <div class="code-block">
+                        <pre><code>class CrossLayerMemory:
+    def __init__(self):
+        self.global_context = {}
+        self.layer_states = {i: {} for i in range(12)}
+        self.transition_history = []
+        self.decision_log = []
+        
+    def store_global_context(self, key, value):
+        self.global_context[key] = value
+        
+    def retrieve_global_context(self, key):
+        return self.global_context.get(key)
+        
+    def store_layer_state(self, layer_id, key, value):
+        self.layer_states[layer_id][key] = value
+        
+    def retrieve_layer_state(self, layer_id, key):
+        return self.layer_states[layer_id].get(key)
+        
+    def log_transition(self, from_layer, to_layer, reason):
+        self.transition_history.append({
+            'timestamp': datetime.now(),
+            'from_layer': from_layer,
+            'to_layer': to_layer,
+            'reason': reason
+        })
+        
+    def log_decision(self, layer_id, decision, justification):
+        self.decision_log.append({
+            'timestamp': datetime.now(),
+            'layer_id': layer_id,
+            'decision': decision,
+            'justification': justification
+        })</code></pre>
+                    </div>
+                    
+                    <h4>Memory Types</h4>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="card mb-4">
+                                <div class="card-header">Global Context</div>
+                                <div class="card-body">
+                                    <p>Stores project-wide information accessible to all layers, including:</p>
+                                    <ul>
+                                        <li>Project requirements</li>
+                                        <li>User preferences</li>
+                                        <li>Global constraints</li>
+                                        <li>Environment settings</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <div class="card mb-4">
+                                <div class="card-header">Layer-Specific State</div>
+                                <div class="card-body">
+                                    <p>Stores context relevant to specific layers, including:</p>
+                                    <ul>
+                                        <li>Processing results</li>
+                                        <li>Layer-specific decisions</li>
+                                        <li>Component definitions</li>
+                                        <li>Intermediate outputs</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <div class="card mb-4">
+                                <div class="card-header">Transition History</div>
+                                <div class="card-body">
+                                    <p>Records movement between layers, including:</p>
+                                    <ul>
+                                        <li>Source and destination layers</li>
+                                        <li>Transition timestamps</li>
+                                        <li>Transition justifications</li>
+                                        <li>Related decision points</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <h4>Memory Operations</h4>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Operation</th>
+                                <th>Description</th>
+                                <th>Use Case</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Context Storage</td>
+                                <td>Writes data to the appropriate memory store based on scope and relevance</td>
+                                <td>Storing analysis results from Layer 2 for use in Layer 3</td>
+                            </tr>
+                            <tr>
+                                <td>Context Retrieval</td>
+                                <td>Queries memory stores to access previously stored information</td>
+                                <td>Retrieving requirements during development for validation</td>
+                            </tr>
+                            <tr>
+                                <td>Transition Logging</td>
+                                <td>Records layer transitions with metadata to track workflow</td>
+                                <td>Tracking the progression through layers for project analytics</td>
+                            </tr>
+                            <tr>
+                                <td>Decision Recording</td>
+                                <td>Documents key decisions with justifications for traceability</td>
+                                <td>Maintaining an audit trail of architectural decisions</td>
+                            </tr>
+                            <tr>
+                                <td>Context Summarization</td>
+                                <td>Generates condensed representations of memory contents</td>
+                                <td>Creating executive summaries of project progress</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="documentation-section">
+                    <h2 id="api-integration">API Integration</h2>
+                    <p>
+                        The HACF exposes a comprehensive REST API for integration with external systems and custom interfaces. The API follows RESTful design principles with JWT authentication.
+                    </p>
+                    
+                    <h4>API Endpoints</h4>
+                    <div class="code-block">
+                        <pre><code>BASE_URL = '/api/v1'
+
+# Authentication Endpoints
+POST /auth/login             # Authenticate user and get JWT token
+POST /auth/refresh           # Refresh JWT token
+POST /auth/logout            # Invalidate JWT token
+
+# Project Endpoints
+GET /projects                # Get all projects for authenticated user
+POST /projects               # Create a new project
+GET /projects/{id}           # Get project details
+PUT /projects/{id}           # Update project details
+DELETE /projects/{id}        # Delete project
+
+# Layer Interaction Endpoints
+POST /projects/{id}/process  # Process input through specified layer
+GET /projects/{id}/layers/{layer_id}/state    # Get layer state
+POST /projects/{id}/transition  # Transition between layers
+
+# Memory Access Endpoints
+GET /projects/{id}/context   # Get global context
+PUT /projects/{id}/context   # Update global context
+GET /projects/{id}/layers/{layer_id}/memory   # Get layer memory
+PUT /projects/{id}/layers/{layer_id}/memory   # Update layer memory
+
+# Analytics Endpoints
+GET /projects/{id}/analytics/transitions   # Get transition history
+GET /projects/{id}/analytics/decisions     # Get decision log</code></pre>
+                    </div>
+                    
+                    <h4>Authentication</h4>
+                    <p>
+                        The API uses JSON Web Tokens (JWT) for authentication. Each request must include a valid JWT in the Authorization header:
+                    </p>
+                    
+                    <div class="code-block">
+                        <pre><code>Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...</code></pre>
+                    </div>
+                    
+                    <h4>Error Handling</h4>
+                    <p>
+                        The API uses standard HTTP status codes and returns detailed error information in a consistent format:
+                    </p>
+                    
+                    <div class="code-block">
+                        <pre><code>{
+  "error": {
+    "code": "INVALID_LAYER_TRANSITION",
+    "message": "Cannot transition directly from layer 0 to layer 5",
+    "details": {
+      "from_layer": 0,
+      "to_layer": 5,
+      "allowed_destinations": [1]
+    }
+  }
+}</code></pre>
+                    </div>
+                    
+                    <h4>Example Request: Processing Input Through a Layer</h4>
+                    <div class="code-block">
+                        <pre><code>POST /api/v1/projects/123/process
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+Content-Type: application/json
+
+{
+  "layer_id": 2,
+  "input": {
+    "query": "Research best practices for implementing OAuth 2.0 in a microservice architecture",
+    "constraints": {
+      "security_level": "high",
+      "technology_stack": ["Python", "Flask", "PostgreSQL"]
+    }
+  },
+  "options": {
+    "detail_level": "comprehensive",
+    "include_references": true
+  }
+}</code></pre>
+                    </div>
+                    
+                    <h4>Example Response</h4>
+                    <div class="code-block">
+                        <pre><code>HTTP/1.1 200 OK
+Content-Type: application/json
+
+{
+  "process_id": "2f9a1b4c-6d8e-42f3-9g7h-5i4j3k2l1m0n",
+  "layer_id": 2,
+  "status": "completed",
+  "result": {
+    "analysis": {
+      "summary": "OAuth 2.0 implementation in microservices presents specific challenges...",
+      "key_findings": [
+        "Token validation across service boundaries requires careful design",
+        "Centralized identity provider simplifies architecture but creates potential single point of failure",
+        "API Gateway pattern can simplify OAuth implementation for client applications"
+      ],
+      "recommended_approaches": [
+        {
+          "name": "API Gateway with Token Translation",
+          "description": "Implement an API Gateway that validates external tokens and issues internal service tokens",
+          "pros": ["Simplified client integration", "Enhanced security isolation"],
+          "cons": ["Additional complexity", "Potential performance impact"]
+        },
+        {
+          "name": "Distributed Token Validation",
+          "description": "Each microservice independently validates tokens",
+          "pros": ["Reduced coupling", "No single point of failure"],
+          "cons": ["Duplicate validation logic", "Increased network traffic to identity provider"]
+        }
+      ]
+    },
+    "references": [
+      {
+        "title": "OAuth 2.0 for Microservices",
+        "url": "https://example.com/oauth-microservices",
+        "relevance_score": 0.92
+      },
+      {
+        "title": "Securing Flask Applications with OAuth 2.0",
+        "url": "https://example.com/flask-oauth",
+        "relevance_score": 0.87
+      }
+    ]
+  },
+  "memory_updates": {
+    "global_context": {
+      "security_requirements": ["OAuth 2.0", "Token Validation", "HTTPS"]
+    },
+    "layer_state": {
+      "research_completed": true,
+      "research_areas": ["authentication", "authorization", "token_management"]
+    }
+  },
+  "suggested_transitions": [
+    {
+      "layer_id": 3,
+      "confidence": 0.85,
+      "justification": "Research complete with high confidence findings"
+    }
+  ]
+}</code></pre>
+                    </div>
+                </div>
+                
+                <div class="documentation-section">
+                    <h2 id="implementation">Implementation Guide</h2>
+                    <p>
+                        This section provides practical guidance for implementing and extending the HACF in different environments and use cases.
+                    </p>
+                    
+                    <div class="timeline-container">
+                        <div class="timeline-item">
+                            <h4>Step 1: Environment Setup</h4>
+                            <p>
+                                Configure the required environment with appropriate AI model access and dependencies:
+                            </p>
+                            <ul>
+                                <li>Python 3.9+ environment with required libraries</li>
+                                <li>PostgreSQL database for storing framework state</li>
+                                <li>API keys for supported AI models</li>
+                                <li>Authentication configuration for secure access</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="timeline-item">
+                            <h4>Step 2: Core Component Implementation</h4>
+                            <p>
+                                Implement the core HACF components:
+                            </p>
+                            <ul>
+                                <li>Layer processors with model integration</li>
+                                <li>Transition network controllers</li>
+                                <li>Cross-layer memory system</li>
+                                <li>API interfaces</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="timeline-item">
+                            <h4>Step 3: Industry Customization</h4>
+                            <p>
+                                Adapt the framework to your industry requirements:
+                            </p>
+                            <ul>
+                                <li>Select appropriate transition network type</li>
+                                <li>Configure industry-specific layer behaviors</li>
+                                <li>Integrate domain-specific knowledge bases</li>
+                                <li>Implement compliance validation rules</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="timeline-item">
+                            <h4>Step 4: UI Integration</h4>
+                            <p>
+                                Develop the interface for interacting with the framework:
+                            </p>
+                            <ul>
+                                <li>Project creation and management</li>
+                                <li>Layer visualization and interaction</li>
+                                <li>Progress monitoring and analytics</li>
+                                <li>Output visualization and export</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="timeline-item">
+                            <h4>Step 5: Testing and Optimization</h4>
+                            <p>
+                                Ensure framework reliability and performance:
+                            </p>
+                            <ul>
+                                <li>Comprehensive testing across all layers</li>
+                                <li>Performance benchmarking and optimization</li>
+                                <li>Security validation</li>
+                                <li>Integration testing with external systems</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <h4>Extension Points</h4>
+                    <p>
+                        The HACF is designed with several extension points for customization:
+                    </p>
+                    
+                    <div class="row row-cols-1 row-cols-md-3 g-4">
+                        <div class="col">
+                            <div class="card h-100">
+                                <div class="card-header">
+                                    Custom Layer Processors
+                                </div>
+                                <div class="card-body">
+                                    <p>
+                                        Implement custom layer processing logic by extending the BaseLayerProcessor class:
+                                    </p>
+                                    <code>class CustomLayerProcessor(BaseLayerProcessor):
+    def process(self, input_data, context):
+        # Custom processing logic
+        return processed_result</code>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col">
+                            <div class="card h-100">
+                                <div class="card-header">
+                                    AI Model Integration
+                                </div>
+                                <div class="card-body">
+                                    <p>
+                                        Add support for additional AI models by implementing the ModelAdapter interface:
+                                    </p>
+                                    <code>class CustomModelAdapter(ModelAdapter):
+    def generate(self, prompt, options):
+        # Custom model interaction
+        return model_response</code>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col">
+                            <div class="card h-100">
+                                <div class="card-header">
+                                    Custom Transition Networks
+                                </div>
+                                <div class="card-body">
+                                    <p>
+                                        Create specialized transition networks by defining transition rules:
+                                    </p>
+                                    <code>class CustomTransitionNetwork(BaseTransitionNetwork):
+    def get_valid_transitions(self, current_layer):
+        # Custom transition logic
+        return valid_destinations</code>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Generate the pyramid layers
+        const pyramidContainer = document.getElementById('hacf-pyramid');
+        const layerDetailsContainer = document.getElementById('layer-details-container');
+        
+        const layerNames = [
+            'Layer 0: Requirement Validation',
+            'Layer 1: Task Definition',
+            'Layer 2: Analysis & Research',
+            'Layer 3: Refinement',
+            'Layer 4: Prototyping',
+            'Layer 5: Development',
+            'Layer 6: Testing & QA',
+            'Layer 7: Optimization',
+            'Layer 8: Deployment Preparation',
+            'Layer 9: Final Output',
+            'Layer 10: Monitoring & Feedback',
+            'Layer 11: Evolution & Maintenance'
+        ];
+        
+        const layerDetails = [
+            `<div class="row">
+                <div class="col-md-6">
+                    <h4>Requirement Validation Layer</h4>
+                    <p>This foundational layer serves as the entry point for user requirements and ensures they are clear, consistent, and feasible.</p>
+                    <h5>Key Functions:</h5>
+                    <ul>
+                        <li>Requirement clarity assessment</li>
+                        <li>Consistency checking against existing systems</li>
+                        <li>Feasibility evaluation based on technical constraints</li>
+                        <li>Automatic clarification request generation</li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <h5>Technical Implementation:</h5>
+                    <p>Powered by Meta-Llama-3.1, this layer utilizes:</p>
+                    <ul>
+                        <li>Natural language understanding for requirement parsing</li>
+                        <li>Pattern recognition to identify ambiguities</li>
+                        <li>Knowledge graph validation for consistency checking</li>
+                        <li>Historical project analysis for feasibility assessment</li>
+                    </ul>
+                    <div class="mt-3">
+                        <span class="ai-model-badge llama">Meta-Llama-3.1</span>
+                    </div>
+                </div>
+            </div>`,
+            
+            `<div class="row">
+                <div class="col-md-6">
+                    <h4>Task Definition Layer</h4>
+                    <p>This layer transforms validated requirements into structured tasks and workflows with clear dependencies and priorities.</p>
+                    <h5>Key Functions:</h5>
+                    <ul>
+                        <li>Requirement decomposition into actionable tasks</li>
+                        <li>Dependency mapping between tasks</li>
+                        <li>Resource estimation for each task</li>
+                        <li>Priority assignment based on business value</li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <h5>Technical Implementation:</h5>
+                    <p>Powered by Meta-Llama-3.1, this layer utilizes:</p>
+                    <ul>
+                        <li>Task decomposition algorithms</li>
+                        <li>Directed acyclic graph generation for dependencies</li>
+                        <li>Historical project data for resource estimation</li>
+                        <li>Critical path analysis for timeline creation</li>
+                    </ul>
+                    <div class="mt-3">
+                        <span class="ai-model-badge llama">Meta-Llama-3.1</span>
+                    </div>
+                </div>
+            </div>`,
+            
+            `<div class="row">
+                <div class="col-md-6">
+                    <h4>Analysis & Research Layer</h4>
+                    <p>This layer conducts in-depth research on required technologies, methodologies, and domain knowledge to inform solution design.</p>
+                    <h5>Key Functions:</h5>
+                    <ul>
+                        <li>Technology stack assessment and selection</li>
+                        <li>Industry best practices research</li>
+                        <li>Competitive analysis</li>
+                        <li>Technical feasibility studies</li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <h5>Technical Implementation:</h5>
+                    <p>Powered by DeepSeek-Reasoner, this layer utilizes:</p>
+                    <ul>
+                        <li>Knowledge retrieval from technical databases</li>
+                        <li>Multi-step reasoning for technology evaluation</li>
+                        <li>Comparative analysis frameworks</li>
+                        <li>Automated literature review capabilities</li>
+                    </ul>
+                    <div class="mt-3">
+                        <span class="ai-model-badge deepseek">DeepSeek-Reasoner</span>
+                    </div>
+                </div>
+            </div>`,
+            
+            // Additional layer details...
+            `<div class="row">
+                <div class="col-md-6">
+                    <h4>Refinement Layer</h4>
+                    <p>This layer refines and consolidates research findings into actionable architectural decisions and design specifications.</p>
+                    <h5>Key Functions:</h5>
+                    <ul>
+                        <li>Research consolidation and synthesis</li>
+                        <li>Architectural pattern selection</li>
+                        <li>Design constraint adaptation</li>
+                        <li>Risk assessment and mitigation planning</li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <h5>Technical Implementation:</h5>
+                    <p>Powered by DeepSeek-Reasoner, this layer utilizes:</p>
+                    <ul>
+                        <li>Decision matrix generation for technology selection</li>
+                        <li>Architecture pattern recognition and application</li>
+                        <li>Constraint satisfaction problem solving</li>
+                        <li>Risk quantification algorithms</li>
+                    </ul>
+                    <div class="mt-3">
+                        <span class="ai-model-badge deepseek">DeepSeek-Reasoner</span>
+                    </div>
+                </div>
+            </div>`,
+            
+            `<div class="row">
+                <div class="col-md-6">
+                    <h4>Prototyping Layer</h4>
+                    <p>This layer creates rapid prototypes and proof-of-concepts to validate design decisions before full implementation.</p>
+                    <h5>Key Functions:</h5>
+                    <ul>
+                        <li>UI/UX mockup generation</li>
+                        <li>Functional prototype creation</li>
+                        <li>API schema design</li>
+                        <li>Component interaction modeling</li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <h5>Technical Implementation:</h5>
+                    <p>Powered by Codestral, this layer utilizes:</p>
+                    <ul>
+                        <li>Code generation for functional prototypes</li>
+                        <li>UI component library integration</li>
+                        <li>API specification generation in OpenAPI format</li>
+                        <li>Interactive simulation capabilities</li>
+                    </ul>
+                    <div class="mt-3">
+                        <span class="ai-model-badge codestral">Codestral</span>
+                    </div>
+                </div>
+            </div>`,
+            
+            `<div class="row">
+                <div class="col-md-6">
+                    <h4>Development Layer</h4>
+                    <p>This layer implements the full solution based on validated prototypes and architectural decisions.</p>
+                    <h5>Key Functions:</h5>
+                    <ul>
+                        <li>Code generation and implementation</li>
+                        <li>Component integration</li>
+                        <li>Database schema implementation</li>
+                        <li>Business logic development</li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <h5>Technical Implementation:</h5>
+                    <p>Powered by Codestral, this layer utilizes:</p>
+                    <ul>
+                        <li>Advanced code generation with design pattern implementation</li>
+                        <li>Test-driven development approach</li>
+                        <li>Database migration script generation</li>
+                        <li>Automated documentation generation</li>
+                    </ul>
+                    <div class="mt-3">
+                        <span class="ai-model-badge codestral">Codestral</span>
+                    </div>
+                </div>
+            </div>`,
+            
+            `<div class="row">
+                <div class="col-md-6">
+                    <h4>Testing & QA Layer</h4>
+                    <p>This layer ensures solution quality through comprehensive testing strategies and bug identification.</p>
+                    <h5>Key Functions:</h5>
+                    <ul>
+                        <li>Test plan development</li>
+                        <li>Unit and integration test generation</li>
+                        <li>Performance testing</li>
+                        <li>Security vulnerability assessment</li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <h5>Technical Implementation:</h5>
+                    <p>Powered by Claude-3, this layer utilizes:</p>
+                    <ul>
+                        <li>Automated test case generation</li>
+                        <li>Code coverage analysis</li>
+                        <li>Performance benchmarking tools</li>
+                        <li>Security scanning integration</li>
+                    </ul>
+                    <div class="mt-3">
+                        <span class="ai-model-badge claude">Claude-3</span>
+                    </div>
+                </div>
+            </div>`,
+            
+            `<div class="row">
+                <div class="col-md-6">
+                    <h4>Optimization Layer</h4>
+                    <p>This layer enhances solution performance, efficiency, and resource utilization through targeted improvements.</p>
+                    <h5>Key Functions:</h5>
+                    <ul>
+                        <li>Code profiling and performance analysis</li>
+                        <li>Bottleneck identification</li>
+                        <li>Algorithm optimization</li>
+                        <li>Resource usage minimization</li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <h5>Technical Implementation:</h5>
+                    <p>Powered by GPT-4o, this layer utilizes:</p>
+                    <ul>
+                        <li>Static code analysis for optimization opportunities</li>
+                        <li>Runtime profiling data interpretation</li>
+                        <li>Algorithm complexity analysis</li>
+                        <li>Automated refactoring for performance</li>
+                    </ul>
+                    <div class="mt-3">
+                        <span class="ai-model-badge gpt">GPT-4o</span>
+                    </div>
+                </div>
+            </div>`,
+            
+            `<div class="row">
+                <div class="col-md-6">
+                    <h4>Deployment Preparation Layer</h4>
+                    <p>This layer prepares the solution for deployment with necessary documentation and configuration.</p>
+                    <h5>Key Functions:</h5>
+                    <ul>
+                        <li>Deployment script generation</li>
+                        <li>Infrastructure configuration</li>
+                        <li>Environment setup documentation</li>
+                        <li>Rollback strategy definition</li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <h5>Technical Implementation:</h5>
+                    <p>Powered by GPT-4o, this layer utilizes:</p>
+                    <ul>
+                        <li>Infrastructure-as-Code template generation</li>
+                        <li>Containerization and orchestration configuration</li>
+                        <li>CI/CD pipeline setup</li>
+                        <li>Deployment verification test creation</li>
+                    </ul>
+                    <div class="mt-3">
+                        <span class="ai-model-badge gpt">GPT-4o</span>
+                    </div>
+                </div>
+            </div>`,
+            
+            `<div class="row">
+                <div class="col-md-6">
+                    <h4>Final Output Layer</h4>
+                    <p>This layer delivers the complete solution with comprehensive documentation and user guides.</p>
+                    <h5>Key Functions:</h5>
+                    <ul>
+                        <li>Final package assembly</li>
+                        <li>User documentation creation</li>
+                        <li>API documentation generation</li>
+                        <li>Technical specification compilation</li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <h5>Technical Implementation:</h5>
+                    <p>Powered by Claude-3, this layer utilizes:</p>
+                    <ul>
+                        <li>Documentation extraction from code and comments</li>
+                        <li>User guide generation with interactive examples</li>
+                        <li>API documentation from interface definitions</li>
+                        <li>Technical document creation with diagrams</li>
+                    </ul>
+                    <div class="mt-3">
+                        <span class="ai-model-badge claude">Claude-3</span>
+                    </div>
+                </div>
+            </div>`,
+            
+            `<div class="row">
+                <div class="col-md-6">
+                    <h4>Monitoring & Feedback Layer</h4>
+                    <p>This layer collects user feedback and monitors solution performance in production environments.</p>
+                    <h5>Key Functions:</h5>
+                    <ul>
+                        <li>Performance metric tracking</li>
+                        <li>User feedback analysis</li>
+                        <li>Error pattern identification</li>
+                        <li>Usage pattern analysis</li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <h5>Technical Implementation:</h5>
+                    <p>Powered by GPT-4o, this layer utilizes:</p>
+                    <ul>
+                        <li>Telemetry data analysis</li>
+                        <li>Sentiment analysis of user feedback</li>
+                        <li>Anomaly detection in performance metrics</li>
+                        <li>Usage pattern clustering</li>
+                    </ul>
+                    <div class="mt-3">
+                        <span class="ai-model-badge gpt">GPT-4o</span>
+                    </div>
+                </div>
+            </div>`,
+            
+            `<div class="row">
+                <div class="col-md-6">
+                    <h4>Evolution & Maintenance Layer</h4>
+                    <p>This layer ensures long-term solution sustainability through continuous improvement and adaptation.</p>
+                    <h5>Key Functions:</h5>
+                    <ul>
+                        <li>Feature enhancement planning</li>
+                        <li>Technology stack modernization</li>
+                        <li>Technical debt management</li>
+                        <li>Long-term maintenance strategy</li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <h5>Technical Implementation:</h5>
+                    <p>Powered by Meta-Llama-3.1, this layer utilizes:</p>
+                    <ul>
+                        <li>Feature prioritization based on user feedback</li>
+                        <li>Technology trend analysis</li>
+                        <li>Technical debt quantification</li>
+                        <li>Roadmap generation for future development</li>
+                    </ul>
+                    <div class="mt-3">
+                        <span class="ai-model-badge llama">Meta-Llama-3.1</span>
+                    </div>
+                </div>
+            </div>`
+        ];
+        
+        // Build the pyramid
+        layerNames.forEach((name, index) => {
+            // Calculate width percentage based on position in pyramid (wider at bottom)
+            const widthPercentage = 20 + (layerNames.length - index) * 6.5;
+            
+            const layer = document.createElement('div');
+            layer.className = 'pyramid-layer';
+            layer.textContent = name;
+            layer.style.width = `${widthPercentage}%`;
+            
+            // Set different colors based on the layer
+            if (index < 2 || index > 10) {
+                layer.style.backgroundColor = 'var(--bs-primary)';
+            } else if (index < 4) {
+                layer.style.backgroundColor = 'var(--bs-info)';
+            } else if (index < 6) {
+                layer.style.backgroundColor = 'var(--bs-success)';
+            } else if (index < 8) {
+                layer.style.backgroundColor = 'var(--bs-warning)';
+            } else {
+                layer.style.backgroundColor = 'var(--bs-danger)';
+            }
+            
+            // Add click event
+            layer.addEventListener('click', function() {
+                // Remove active class from all layers
+                document.querySelectorAll('.pyramid-layer').forEach(l => {
+                    l.classList.remove('active');
+                });
+                
+                // Add active class to clicked layer
+                this.classList.add('active');
+                
+                // Show layer details
+                const detailsDiv = document.createElement('div');
+                detailsDiv.className = 'layer-details fade-in';
+                detailsDiv.innerHTML = layerDetails[index];
+                
+                // Clear previous details
+                layerDetailsContainer.innerHTML = '';
+                layerDetailsContainer.appendChild(detailsDiv);
+                
+                // Show with animation
+                setTimeout(() => {
+                    detailsDiv.classList.add('show');
+                }, 10);
+                
+                // Scroll to details if needed
+                layerDetailsContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            });
+            
+            pyramidContainer.appendChild(layer);
+        });
+        
+        // Initialize network visualizations
+        function initNetworkVisualizations() {
+            // Simple placeholder visualization - in a real implementation, this would be
+            // a more sophisticated D3.js or similar visualization
+            const networkContainers = [
+                document.getElementById('standard-network'),
+                document.getElementById('agile-network'),
+                document.getElementById('research-network'),
+                document.getElementById('security-network'),
+                document.getElementById('iterative-network')
+            ];
+            
+            networkContainers.forEach(container => {
+                if (!container) return;
+                
+                // Create a simple network visualization placeholder
+                container.innerHTML = `
+                    <div class="d-flex justify-content-around align-items-center">
+                        <div class="network-node bg-primary text-white">L0</div>
+                        <div class="network-node bg-info text-white">L2</div>
+                        <div class="network-node bg-success text-white">L5</div>
+                        <div class="network-node bg-warning text-dark">L8</div>
+                        <div class="network-node bg-danger text-white">L11</div>
+                    </div>
+                    <div class="text-center mt-4">
+                        <span class="text-muted">Interactive network visualization - Click nodes to see transitions</span>
+                    </div>
+                `;
+            });
+        }
+        
+        // Initialize visualizations
+        initNetworkVisualizations();
+        
+        // Smooth scrolling for all anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+    });
+</script>
+{% endblock %}
