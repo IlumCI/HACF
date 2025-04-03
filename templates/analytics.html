@@ -1,0 +1,374 @@
+{% extends "base.html" %}
+
+{% block head %}
+<style>
+    .stats-card {
+        transition: transform 0.3s ease;
+    }
+    
+    .stats-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .chart-container {
+        position: relative;
+        height: 300px;
+        margin-bottom: 30px;
+    }
+    
+    .badge-1 {
+        background-color: var(--bs-primary);
+    }
+    
+    .badge-2 {
+        background-color: var(--bs-info);
+    }
+    
+    .badge-3 {
+        background-color: var(--bs-success);
+    }
+    
+    .badge-4 {
+        background-color: var(--bs-warning);
+        color: var(--bs-dark);
+    }
+    
+    .badge-5 {
+        background-color: var(--bs-danger);
+    }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <h2>Analytics & Insights</h2>
+        <p>Track your HACF usage and performance across projects and layers.</p>
+    </div>
+</div>
+
+<!-- Stats Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card stats-card bg-primary bg-opacity-10">
+            <div class="card-body text-center">
+                <h5 class="card-title">Total Projects</h5>
+                <h2 class="display-4">{{ stats.total_projects }}</h2>
+                <p class="card-text">{{ stats.active_projects }} active</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card stats-card bg-success bg-opacity-10">
+            <div class="card-body text-center">
+                <h5 class="card-title">Completed Projects</h5>
+                <h2 class="display-4">{{ stats.completed_projects }}</h2>
+                <p class="card-text">{{ stats.completion_rate }}% completion rate</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card stats-card bg-info bg-opacity-10">
+            <div class="card-body text-center">
+                <h5 class="card-title">Files Generated</h5>
+                <h2 class="display-4">{{ stats.files_generated }}</h2>
+                <p class="card-text">Avg. {{ stats.avg_files_per_project }} per project</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card stats-card bg-warning bg-opacity-10">
+            <div class="card-body text-center">
+                <h5 class="card-title">Total Interactions</h5>
+                <h2 class="display-4">{{ stats.total_interactions }}</h2>
+                <p class="card-text">Last 30 days</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Layer Stats -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h4>HACF Layer Performance</h4>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5>Time Spent in Each Layer</h5>
+                        <div class="chart-container">
+                            <canvas id="layerTimeChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h5>Layer Completion Rate</h5>
+                        <div class="chart-container">
+                            <canvas id="layerCompletionChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mt-4">
+                    <div class="col-md-12">
+                        <h5>Layer Metrics</h5>
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Layer</th>
+                                    <th>Avg. Time</th>
+                                    <th>Success Rate</th>
+                                    <th>Most Common Issue</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><span class="badge badge-1">Layer 1</span> Task Definition</td>
+                                    <td>{{ layer_stats.layer1.avg_time }} min</td>
+                                    <td>{{ layer_stats.layer1.success_rate }}%</td>
+                                    <td>{{ layer_stats.layer1.common_issue }}</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="badge badge-2">Layer 2</span> Refinement</td>
+                                    <td>{{ layer_stats.layer2.avg_time }} min</td>
+                                    <td>{{ layer_stats.layer2.success_rate }}%</td>
+                                    <td>{{ layer_stats.layer2.common_issue }}</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="badge badge-3">Layer 3</span> Development</td>
+                                    <td>{{ layer_stats.layer3.avg_time }} min</td>
+                                    <td>{{ layer_stats.layer3.success_rate }}%</td>
+                                    <td>{{ layer_stats.layer3.common_issue }}</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="badge badge-4">Layer 4</span> Optimization</td>
+                                    <td>{{ layer_stats.layer4.avg_time }} min</td>
+                                    <td>{{ layer_stats.layer4.success_rate }}%</td>
+                                    <td>{{ layer_stats.layer4.common_issue }}</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="badge badge-5">Layer 5</span> Final Output</td>
+                                    <td>{{ layer_stats.layer5.avg_time }} min</td>
+                                    <td>{{ layer_stats.layer5.success_rate }}%</td>
+                                    <td>{{ layer_stats.layer5.common_issue }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Project Timeline -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h4>Project Timeline</h4>
+            </div>
+            <div class="card-body">
+                <div class="chart-container" style="height: 400px;">
+                    <canvas id="projectTimelineChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- User Activity -->
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h4>Recent Activity</h4>
+            </div>
+            <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                <ul class="list-group">
+                    {% for activity in recent_activity %}
+                        <li class="list-group-item">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">{{ activity.action }}</h6>
+                                <small>{{ activity.timestamp }}</small>
+                            </div>
+                            <p class="mb-1">{{ activity.description }}</p>
+                            <small>Project: {{ activity.project }}</small>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h4>Popular Technologies</h4>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="techChart"></canvas>
+                </div>
+                <div class="mt-3">
+                    <h6>Most Used Technologies</h6>
+                    <div class="d-flex flex-wrap">
+                        {% for tech in popular_technologies %}
+                            <span class="badge bg-secondary m-1">{{ tech.name }} ({{ tech.count }})</span>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Chart.js configuration
+        Chart.defaults.color = '#adb5bd';
+        Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.1)';
+        
+        // Layer time spent chart
+        const layerTimeCtx = document.getElementById('layerTimeChart').getContext('2d');
+        const layerTimeChart = new Chart(layerTimeCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Task Definition', 'Refinement', 'Development', 'Optimization', 'Final Output'],
+                datasets: [{
+                    data: [
+                        {{ layer_stats.layer1.avg_time }}, 
+                        {{ layer_stats.layer2.avg_time }}, 
+                        {{ layer_stats.layer3.avg_time }}, 
+                        {{ layer_stats.layer4.avg_time }}, 
+                        {{ layer_stats.layer5.avg_time }}
+                    ],
+                    backgroundColor: [
+                        '#0d6efd', // primary
+                        '#0dcaf0', // info
+                        '#198754', // success
+                        '#ffc107', // warning
+                        '#dc3545'  // danger
+                    ],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
+        
+        // Layer completion rate chart
+        const layerCompletionCtx = document.getElementById('layerCompletionChart').getContext('2d');
+        const layerCompletionChart = new Chart(layerCompletionCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Layer 1', 'Layer 2', 'Layer 3', 'Layer 4', 'Layer 5'],
+                datasets: [{
+                    label: 'Completion Rate (%)',
+                    data: [
+                        {{ layer_stats.layer1.success_rate }}, 
+                        {{ layer_stats.layer2.success_rate }}, 
+                        {{ layer_stats.layer3.success_rate }}, 
+                        {{ layer_stats.layer4.success_rate }}, 
+                        {{ layer_stats.layer5.success_rate }}
+                    ],
+                    backgroundColor: [
+                        'rgba(13, 110, 253, 0.7)', // primary
+                        'rgba(13, 202, 240, 0.7)', // info
+                        'rgba(25, 135, 84, 0.7)',  // success
+                        'rgba(255, 193, 7, 0.7)',  // warning
+                        'rgba(220, 53, 69, 0.7)'   // danger
+                    ],
+                    borderColor: [
+                        '#0d6efd', // primary
+                        '#0dcaf0', // info
+                        '#198754', // success
+                        '#ffc107', // warning
+                        '#dc3545'  // danger
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100
+                    }
+                }
+            }
+        });
+        
+        // Project timeline chart
+        const projectTimelineCtx = document.getElementById('projectTimelineChart').getContext('2d');
+        const projectTimelineChart = new Chart(projectTimelineCtx, {
+            type: 'line',
+            data: {
+                labels: {{ timeline_data.dates|safe }},
+                datasets: [{
+                    label: 'Projects Started',
+                    data: {{ timeline_data.started|safe }},
+                    borderColor: '#0d6efd',
+                    backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }, {
+                    label: 'Projects Completed',
+                    data: {{ timeline_data.completed|safe }},
+                    borderColor: '#198754',
+                    backgroundColor: 'rgba(25, 135, 84, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+        
+        // Technology usage chart
+        const techCtx = document.getElementById('techChart').getContext('2d');
+        const techChart = new Chart(techCtx, {
+            type: 'polarArea',
+            data: {
+                labels: {{ tech_data.labels|safe }},
+                datasets: [{
+                    data: {{ tech_data.counts|safe }},
+                    backgroundColor: [
+                        'rgba(13, 110, 253, 0.7)',   // primary
+                        'rgba(13, 202, 240, 0.7)',   // info
+                        'rgba(25, 135, 84, 0.7)',    // success
+                        'rgba(255, 193, 7, 0.7)',    // warning
+                        'rgba(220, 53, 69, 0.7)',    // danger
+                        'rgba(108, 117, 125, 0.7)',  // secondary
+                        'rgba(32, 201, 151, 0.7)',   // teal
+                        'rgba(111, 66, 193, 0.7)'    // purple
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
+    });
+</script>
+{% endblock %}

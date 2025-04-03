@@ -28,6 +28,15 @@
                     <li class="nav-item">
                         <a class="nav-link" href="/">Home</a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard">Projects</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#layerHelpModal">HACF Layers</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/analytics">Analytics</a>
+                    </li>
                 </ul>
             </div>
         </div>
@@ -43,6 +52,104 @@
         </div>
     </footer>
 
+    <!-- HACF Layers Help Modal -->
+    <div class="modal fade" id="layerHelpModal" tabindex="-1" aria-labelledby="layerHelpModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="layerHelpModalLabel">HACF Layers Explained</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row mb-4">
+                        <div class="col-md-12">
+                            <h4>The Hierarchical AI Collaboration Framework</h4>
+                            <p>HACF is a structured approach to AI-assisted development that breaks down complex tasks into specialized layers:</p>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-2 text-center">
+                            <div class="p-3 bg-primary text-white rounded-circle mx-auto" style="width: 60px; height: 60px;">
+                                <h3>1</h3>
+                            </div>
+                        </div>
+                        <div class="col-md-10">
+                            <h5>Task Definition & Planning Layer</h5>
+                            <p>Uses <strong>meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo</strong> to convert user requests into structured plans and well-formed prompts.</p>
+                            <div class="alert alert-secondary">
+                                <strong>Example Output:</strong> Structured JSON defining project requirements and features
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-2 text-center">
+                            <div class="p-3 bg-info text-white rounded-circle mx-auto" style="width: 60px; height: 60px;">
+                                <h3>2</h3>
+                            </div>
+                        </div>
+                        <div class="col-md-10">
+                            <h5>Refinement & Base Structure Layer</h5>
+                            <p>Uses <strong>deepseek-reasoner</strong> to convert the high-level plan into a technical roadmap with base code structure.</p>
+                            <div class="alert alert-secondary">
+                                <strong>Example Output:</strong> Technical specifications including frameworks, libraries, and database schemas
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-2 text-center">
+                            <div class="p-3 bg-success text-white rounded-circle mx-auto" style="width: 60px; height: 60px;">
+                                <h3>3</h3>
+                            </div>
+                        </div>
+                        <div class="col-md-10">
+                            <h5>Development & Execution Layer</h5>
+                            <p>Uses <strong>codestral-latest</strong> or <strong>claude-3-7-sonnet</strong> to generate fully functional code based on structured inputs.</p>
+                            <div class="alert alert-secondary">
+                                <strong>Example Output:</strong> Complete implementation code for frontend and backend components
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-2 text-center">
+                            <div class="p-3 bg-warning text-dark rounded-circle mx-auto" style="width: 60px; height: 60px;">
+                                <h3>4</h3>
+                            </div>
+                        </div>
+                        <div class="col-md-10">
+                            <h5>Debugging, Optimization & Security Layer</h5>
+                            <p>Uses <strong>gpt-4o</strong> to review, debug, and optimize generated code.</p>
+                            <div class="alert alert-secondary">
+                                <strong>Example Output:</strong> Improved code with security features, optimized performance, and fixed bugs
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-2 text-center">
+                            <div class="p-3 bg-danger text-white rounded-circle mx-auto" style="width: 60px; height: 60px;">
+                                <h3>5</h3>
+                            </div>
+                        </div>
+                        <div class="col-md-10">
+                            <h5>Final Output Layer</h5>
+                            <p>Processes, formats, and prepares the final code for download.</p>
+                            <div class="alert alert-secondary">
+                                <strong>Example Output:</strong> Downloadable project files ready for deployment
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <!-- Bootstrap JS Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     {% block scripts %}{% endblock %}

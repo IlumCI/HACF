@@ -1,0 +1,605 @@
+{% extends "base.html" %}
+
+{% block head %}
+<style>
+    .progress-container {
+        height: 25px;
+        background-color: var(--bs-dark);
+        border-radius: 5px;
+        margin-bottom: 15px;
+    }
+    
+    .progress-bar {
+        height: 100%;
+        background: linear-gradient(to right, var(--bs-success), var(--bs-info));
+        border-radius: 5px;
+        transition: width 0.5s ease-in-out;
+    }
+    
+    .layer-card {
+        margin-bottom: 20px;
+        transition: all 0.3s ease;
+        border-radius: 8px;
+    }
+    
+    .layer-card.active {
+        border: 2px solid var(--bs-info);
+        box-shadow: 0 0 15px rgba(13, 202, 240, 0.5);
+    }
+    
+    .layer-card.complete {
+        border-left: 5px solid var(--bs-success);
+    }
+    
+    .layer-card.locked {
+        opacity: 0.7;
+    }
+    
+    .code-editor {
+        min-height: 300px;
+        font-family: monospace;
+        background-color: var(--bs-dark);
+        color: var(--bs-light);
+        padding: 15px;
+        border-radius: 5px;
+        margin-bottom: 20px;
+        resize: vertical;
+    }
+    
+    .file-explorer {
+        list-style-type: none;
+        padding-left: 0;
+    }
+    
+    .file-item {
+        padding: 8px 15px;
+        border-radius: 5px;
+        margin-bottom: 5px;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+    }
+    
+    .file-item:hover {
+        background-color: var(--bs-dark);
+    }
+    
+    .file-item.active {
+        background-color: var(--bs-primary);
+        color: white;
+    }
+    
+    .layer-transition {
+        position: relative;
+        height: 50px;
+        margin: 20px 0;
+    }
+    
+    .transition-line {
+        position: absolute;
+        top: 25px;
+        left: 50%;
+        width: 2px;
+        height: 100%;
+        background-color: var(--bs-info);
+    }
+    
+    .transition-arrow {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 40px;
+        height: 40px;
+        background-color: var(--bs-dark);
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: var(--bs-info);
+        font-size: 20px;
+    }
+    
+    #code-preview {
+        min-height: 400px;
+        background-color: var(--bs-dark);
+        padding: 15px;
+        border-radius: 5px;
+        overflow: auto;
+        font-family: monospace;
+    }
+    
+    .output-section {
+        background-color: var(--bs-dark);
+        padding: 15px;
+        border-radius: 5px;
+        min-height: 200px;
+        margin-bottom: 20px;
+    }
+    
+    .sandbox-controls {
+        margin-bottom: 15px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+                <li class="breadcrumb-item active" aria-current="page">{{ project.title }}</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h2>{{ project.title }}</h2>
+        <p>{{ project.description }}</p>
+    </div>
+    <div class="col-md-4 text-end">
+        <div class="btn-group">
+            <a href="{{ url_for('edit_project', project_id=project.id) }}" class="btn btn-outline-primary">
+                <i class="feather-edit"></i> Edit
+            </a>
+            <button class="btn btn-success" id="export-btn">
+                <i class="feather-download"></i> Export
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-body">
+                <h5>Project Progress</h5>
+                <div class="progress-container">
+                    <div class="progress-bar" style="width: {{ project.progress }}%"></div>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <span>Task Definition</span>
+                    <span>Refinement</span>
+                    <span>Development</span>
+                    <span>Optimization</span>
+                    <span>Final</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Left sidebar with layers navigation -->
+    <div class="col-md-3">
+        <div class="list-group mb-4">
+            <a href="#layer1" class="list-group-item list-group-item-action {% if project.layer1_complete %}list-group-item-success{% endif %}" data-bs-toggle="collapse" data-bs-target="#layer1-content">
+                Layer 1: Task Definition
+                {% if project.layer1_complete %}<span class="badge bg-success float-end">✓</span>{% endif %}
+            </a>
+            <a href="#layer2" class="list-group-item list-group-item-action {% if project.layer2_complete %}list-group-item-success{% endif %} {% if not project.layer1_complete %}disabled{% endif %}" data-bs-toggle="collapse" data-bs-target="#layer2-content">
+                Layer 2: Refinement
+                {% if project.layer2_complete %}<span class="badge bg-success float-end">✓</span>{% endif %}
+            </a>
+            <a href="#layer3" class="list-group-item list-group-item-action {% if project.layer3_complete %}list-group-item-success{% endif %} {% if not project.layer2_complete %}disabled{% endif %}" data-bs-toggle="collapse" data-bs-target="#layer3-content">
+                Layer 3: Development
+                {% if project.layer3_complete %}<span class="badge bg-success float-end">✓</span>{% endif %}
+            </a>
+            <a href="#layer4" class="list-group-item list-group-item-action {% if project.layer4_complete %}list-group-item-success{% endif %} {% if not project.layer3_complete %}disabled{% endif %}" data-bs-toggle="collapse" data-bs-target="#layer4-content">
+                Layer 4: Optimization
+                {% if project.layer4_complete %}<span class="badge bg-success float-end">✓</span>{% endif %}
+            </a>
+            <a href="#layer5" class="list-group-item list-group-item-action {% if project.layer5_complete %}list-group-item-success{% endif %} {% if not project.layer4_complete %}disabled{% endif %}" data-bs-toggle="collapse" data-bs-target="#layer5-content">
+                Layer 5: Final Output
+                {% if project.layer5_complete %}<span class="badge bg-success float-end">✓</span>{% endif %}
+            </a>
+        </div>
+        
+        <!-- File Explorer (when files are available) -->
+        <div class="card mb-4 {% if not project.files %}d-none{% endif %}" id="file-explorer-card">
+            <div class="card-header">
+                <h5>Files</h5>
+            </div>
+            <div class="card-body">
+                <ul class="file-explorer" id="file-list">
+                    <!-- Files will be populated dynamically -->
+                    {% if project.files %}
+                        {% for file in project.files_list %}
+                            <li class="file-item" data-filename="{{ file.name }}">
+                                <i class="feather-file"></i> {{ file.name }}
+                            </li>
+                        {% endfor %}
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Main content area -->
+    <div class="col-md-9">
+        <!-- Layer 1: Task Definition & Planning -->
+        <div class="collapse show" id="layer1-content">
+            <div class="card layer-card {% if project.layer1_complete %}complete{% endif %} {% if active_layer == 1 %}active{% endif %}">
+                <div class="card-header">
+                    <h4>Layer 1: Task Definition & Planning</h4>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="task-description" class="form-label">Task Description</label>
+                        <textarea class="form-control" id="task-description" rows="3" {% if project.layer1_complete %}readonly{% endif %}>{{ project.task_definition or '' }}</textarea>
+                    </div>
+                    {% if not project.layer1_complete %}
+                        <button id="process-layer1" class="btn btn-primary">Process Layer 1</button>
+                    {% else %}
+                        <div class="alert alert-success">
+                            <i class="feather-check-circle"></i> Task definition complete
+                        </div>
+                        <button id="continue-to-layer2" class="btn btn-outline-primary">Continue to Layer 2</button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Layer Transition Animation -->
+        <div class="layer-transition">
+            <div class="transition-line"></div>
+            <div class="transition-arrow">
+                <i class="feather-arrow-down"></i>
+            </div>
+        </div>
+        
+        <!-- Layer 2: Refinement & Base Structure -->
+        <div class="collapse" id="layer2-content">
+            <div class="card layer-card {% if project.layer2_complete %}complete{% endif %} {% if active_layer == 2 %}active{% endif %} {% if not project.layer1_complete %}locked{% endif %}">
+                <div class="card-header">
+                    <h4>Layer 2: Refinement & Base Structure</h4>
+                </div>
+                <div class="card-body">
+                    {% if not project.layer1_complete %}
+                        <div class="alert alert-warning">
+                            <i class="feather-lock"></i> Complete Layer 1 to unlock this layer
+                        </div>
+                    {% else %}
+                        <div class="output-section mb-3">
+                            <h5>Technical Roadmap</h5>
+                            <pre id="refinement-output">{{ project.refined_structure or 'No refinement data yet.' }}</pre>
+                        </div>
+                        {% if not project.layer2_complete %}
+                            <button id="process-layer2" class="btn btn-primary">Process Layer 2</button>
+                        {% else %}
+                            <div class="alert alert-success">
+                                <i class="feather-check-circle"></i> Refinement complete
+                            </div>
+                            <button id="continue-to-layer3" class="btn btn-outline-primary">Continue to Layer 3</button>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Layer Transition Animation -->
+        <div class="layer-transition">
+            <div class="transition-line"></div>
+            <div class="transition-arrow">
+                <i class="feather-arrow-down"></i>
+            </div>
+        </div>
+        
+        <!-- Layer 3: Development & Execution -->
+        <div class="collapse" id="layer3-content">
+            <div class="card layer-card {% if project.layer3_complete %}complete{% endif %} {% if active_layer == 3 %}active{% endif %} {% if not project.layer2_complete %}locked{% endif %}">
+                <div class="card-header">
+                    <h4>Layer 3: Development & Execution</h4>
+                </div>
+                <div class="card-body">
+                    {% if not project.layer2_complete %}
+                        <div class="alert alert-warning">
+                            <i class="feather-lock"></i> Complete Layer 2 to unlock this layer
+                        </div>
+                    {% else %}
+                        <div class="code-editor mb-3" id="development-code">{{ project.development_code or '// Code will be generated here' }}</div>
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h5>Code Preview</h5>
+                                    </div>
+                                    <div class="card-body p-0">
+                                        <div id="code-preview"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% if not project.layer3_complete %}
+                            <button id="process-layer3" class="btn btn-primary">Process Layer 3</button>
+                        {% else %}
+                            <div class="alert alert-success">
+                                <i class="feather-check-circle"></i> Development complete
+                            </div>
+                            <button id="continue-to-layer4" class="btn btn-outline-primary">Continue to Layer 4</button>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Layer Transition Animation -->
+        <div class="layer-transition">
+            <div class="transition-line"></div>
+            <div class="transition-arrow">
+                <i class="feather-arrow-down"></i>
+            </div>
+        </div>
+        
+        <!-- Layer 4: Debugging, Optimization & Security -->
+        <div class="collapse" id="layer4-content">
+            <div class="card layer-card {% if project.layer4_complete %}complete{% endif %} {% if active_layer == 4 %}active{% endif %} {% if not project.layer3_complete %}locked{% endif %}">
+                <div class="card-header">
+                    <h4>Layer 4: Debugging, Optimization & Security</h4>
+                </div>
+                <div class="card-body">
+                    {% if not project.layer3_complete %}
+                        <div class="alert alert-warning">
+                            <i class="feather-lock"></i> Complete Layer 3 to unlock this layer
+                        </div>
+                    {% else %}
+                        <div class="code-editor mb-3" id="optimized-code">{{ project.optimized_code or '// Optimized code will appear here' }}</div>
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                <div class="card">
+                                    <div class="card-header d-flex justify-content-between align-items-center">
+                                        <h5>Code Analysis</h5>
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox" id="show-diff">
+                                            <label class="form-check-label" for="show-diff">Show Diff</label>
+                                        </div>
+                                    </div>
+                                    <div class="card-body">
+                                        <div id="code-analysis"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% if not project.layer4_complete %}
+                            <button id="process-layer4" class="btn btn-primary">Process Layer 4</button>
+                        {% else %}
+                            <div class="alert alert-success">
+                                <i class="feather-check-circle"></i> Optimization complete
+                            </div>
+                            <button id="continue-to-layer5" class="btn btn-outline-primary">Continue to Layer 5</button>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Layer Transition Animation -->
+        <div class="layer-transition">
+            <div class="transition-line"></div>
+            <div class="transition-arrow">
+                <i class="feather-arrow-down"></i>
+            </div>
+        </div>
+        
+        <!-- Layer 5: Final Output -->
+        <div class="collapse" id="layer5-content">
+            <div class="card layer-card {% if project.layer5_complete %}complete{% endif %} {% if active_layer == 5 %}active{% endif %} {% if not project.layer4_complete %}locked{% endif %}">
+                <div class="card-header">
+                    <h4>Layer 5: Final Output</h4>
+                </div>
+                <div class="card-body">
+                    {% if not project.layer4_complete %}
+                        <div class="alert alert-warning">
+                            <i class="feather-lock"></i> Complete Layer 4 to unlock this layer
+                        </div>
+                    {% else %}
+                        <div class="row mb-4">
+                            <div class="col-md-12">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h5>Generated Files</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <ul class="list-group" id="files-list">
+                                            {% if project.files %}
+                                                {% for file in project.files_list %}
+                                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                        <span><i class="feather-file"></i> {{ file.name }}</span>
+                                                        <button class="btn btn-sm btn-outline-secondary view-file-btn" data-filename="{{ file.name }}">View</button>
+                                                    </li>
+                                                {% endfor %}
+                                            {% else %}
+                                                <li class="list-group-item">No files generated yet</li>
+                                            {% endif %}
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {% if not project.layer5_complete %}
+                            <button id="process-layer5" class="btn btn-primary">Process Layer 5</button>
+                        {% else %}
+                            <div class="alert alert-success">
+                                <i class="feather-check-circle"></i> Project complete!</div>
+                            <div class="d-grid gap-2">
+                                <button id="download-project" class="btn btn-success">
+                                    <i class="feather-download"></i> Download Project
+                                </button>
+                                <button id="create-new-project" class="btn btn-outline-primary">
+                                    <i class="feather-plus-circle"></i> Create New Project
+                                </button>
+                            </div>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- File Preview Modal -->
+        <div class="modal fade" id="filePreviewModal" tabindex="-1" aria-labelledby="filePreviewModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-scrollable">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="filePreviewModalLabel">File Preview</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <pre id="file-preview-content" class="p-3 bg-dark"></pre>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-primary" id="download-single-file">Download This File</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Export Options Modal -->
+<div class="modal fade" id="exportModal" tabindex="-1" aria-labelledby="exportModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exportModalLabel">Export Project</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="list-group">
+                    <button class="list-group-item list-group-item-action" id="export-zip">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h5 class="mb-1">Download as ZIP</h5>
+                        </div>
+                        <p class="mb-1">Download all project files as a ZIP archive</p>
+                    </button>
+                    <button class="list-group-item list-group-item-action" id="export-github">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h5 class="mb-1">Push to GitHub</h5>
+                        </div>
+                        <p class="mb-1">Create a new GitHub repository with this project</p>
+                    </button>
+                    <button class="list-group-item list-group-item-action" id="export-json">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h5 class="mb-1">Export as JSON</h5>
+                        </div>
+                        <p class="mb-1">Export the project data in JSON format</p>
+                    </button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="{{ url_for('static', filename='js/project.js') }}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Setup export button
+        document.getElementById('export-btn').addEventListener('click', function() {
+            const exportModal = new bootstrap.Modal(document.getElementById('exportModal'));
+            exportModal.show();
+        });
+        
+        // Layer processing simulation
+        function simulateLayerProcessing(layerNum) {
+            return new Promise((resolve) => {
+                // For demo purposes, just wait 2 seconds
+                setTimeout(() => {
+                    resolve(`Processed layer ${layerNum}`);
+                }, 2000);
+            });
+        }
+        
+        // Layer processing buttons
+        document.querySelectorAll('[id^="process-layer"]').forEach(button => {
+            button.addEventListener('click', async function() {
+                const layerNum = this.id.replace('process-layer', '');
+                this.disabled = true;
+                this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing...';
+                
+                try {
+                    // Call the appropriate API endpoint for this layer
+                    await processLayer(layerNum);
+                    
+                    // After processing is complete, refresh the page to show updates
+                    window.location.reload();
+                } catch (error) {
+                    alert(`Error processing layer ${layerNum}: ${error.message}`);
+                    this.disabled = false;
+                    this.innerHTML = `Process Layer ${layerNum}`;
+                }
+            });
+        });
+        
+        // Continue buttons
+        document.querySelectorAll('[id^="continue-to-layer"]').forEach(button => {
+            button.addEventListener('click', function() {
+                const targetLayer = this.id.replace('continue-to-layer', '');
+                
+                // Collapse all content
+                document.querySelectorAll('[id$="-content"].collapse').forEach(el => {
+                    bootstrap.Collapse.getInstance(el)?.hide();
+                });
+                
+                // Show the target layer
+                const targetContent = document.getElementById(`layer${targetLayer}-content`);
+                bootstrap.Collapse.getOrCreateInstance(targetContent).show();
+                
+                // Scroll to the target layer
+                targetContent.scrollIntoView({ behavior: 'smooth' });
+            });
+        });
+        
+        // File viewing
+        document.querySelectorAll('.view-file-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const filename = this.getAttribute('data-filename');
+                const fileContent = getFileContent(filename);
+                
+                document.getElementById('filePreviewModalLabel').textContent = filename;
+                document.getElementById('file-preview-content').textContent = fileContent;
+                
+                const fileModal = new bootstrap.Modal(document.getElementById('filePreviewModal'));
+                fileModal.show();
+            });
+        });
+        
+        // Function to process a layer via API
+        async function processLayer(layerNum) {
+            const projectId = {{ project.id }};
+            const response = await fetch(`/process_layer/${projectId}/${layerNum}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            if (!response.ok) {
+                throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+            }
+            
+            return await response.json();
+        }
+        
+        // Dummy function to get file content - would be replaced with real API call
+        function getFileContent(filename) {
+            // This would normally fetch from the server
+            return `// Content of ${filename}\n// This is a placeholder`;
+        }
+        
+        // Download project button
+        document.getElementById('download-project')?.addEventListener('click', function() {
+            // This would be handled via HACF download functionality
+            alert('Project download initiated');
+        });
+    });
+</script>
+{% endblock %}
