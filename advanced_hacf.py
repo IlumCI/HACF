@@ -443,7 +443,7 @@ class AdaptiveLayerSequencer:
             return {'overall': 'medium', 'factors': {}}
     
     @classmethod
-    def determine_layer_sequence(cls, project: Project, session_id: str = None, 
+    def determine_layer_sequence(cls, project: Project, session_id: Optional[str] = None, 
                                 feedback: Optional[Dict[str, Any]] = None) -> List[int]:
         """
         Determine the optimal sequence of HACF layers for a project
@@ -712,41 +712,175 @@ class CrossLayerMemory:
     
     # Layer relevance matrix - how relevant memories from one layer are to other layers
     # Values range from 0.0 (not relevant) to 1.0 (highly relevant)
+    # Extended to support all 12 layers (0-11)
     LAYER_RELEVANCE = {
-        1: {  # Relevance of Layer 1 memories to each layer
-            1: 1.0,  # To itself
-            2: 0.9,  # Layer 1 memories are highly relevant to Layer 2
-            3: 0.7,  # Layer 1 memories are moderately relevant to Layer 3
-            4: 0.5,  # Layer 1 memories are somewhat relevant to Layer 4
-            5: 0.8   # Layer 1 memories are highly relevant to Layer 5 (for documentation)
+        0: {  # Relevance of Layer 0 (Requirement Validation) memories to each layer
+            0: 1.0,   # To itself
+            1: 0.9,   # Highly relevant to Task Definition
+            2: 0.8,   # Highly relevant to Analysis & Research
+            3: 0.7,   # Moderately relevant to Refinement
+            4: 0.6,   # Somewhat relevant to Prototyping
+            5: 0.5,   # Somewhat relevant to Development
+            6: 0.5,   # Somewhat relevant to Testing & QA
+            7: 0.4,   # Limited relevance to Optimization
+            8: 0.5,   # Somewhat relevant to Deployment Preparation
+            9: 0.7,   # Moderately relevant to Final Output
+            10: 0.6,  # Somewhat relevant to Monitoring & Feedback
+            11: 0.8   # Highly relevant to Evolution & Maintenance
         },
-        2: {  # Relevance of Layer 2 memories to each layer
-            1: 0.4,  # Layer 2 memories have limited relevance to Layer 1
-            2: 1.0,  # To itself
-            3: 0.9,  # Layer 2 memories are highly relevant to Layer 3
-            4: 0.7,  # Layer 2 memories are moderately relevant to Layer 4
-            5: 0.7   # Layer 2 memories are moderately relevant to Layer 5
+        1: {  # Relevance of Layer 1 (Task Definition) memories to each layer
+            0: 0.5,   # Somewhat relevant to Requirement Validation
+            1: 1.0,   # To itself
+            2: 0.9,   # Highly relevant to Analysis & Research
+            3: 0.8,   # Highly relevant to Refinement
+            4: 0.7,   # Moderately relevant to Prototyping
+            5: 0.6,   # Somewhat relevant to Development
+            6: 0.5,   # Somewhat relevant to Testing & QA
+            7: 0.4,   # Limited relevance to Optimization
+            8: 0.5,   # Somewhat relevant to Deployment Preparation
+            9: 0.7,   # Moderately relevant to Final Output
+            10: 0.5,  # Somewhat relevant to Monitoring & Feedback
+            11: 0.8   # Highly relevant to Evolution & Maintenance
         },
-        3: {  # Relevance of Layer 3 memories to each layer
-            1: 0.2,  # Layer 3 memories have minimal relevance to Layer 1
-            2: 0.5,  # Layer 3 memories have some relevance to Layer 2
-            3: 1.0,  # To itself
-            4: 0.9,  # Layer 3 memories are highly relevant to Layer 4
-            5: 0.8   # Layer 3 memories are highly relevant to Layer 5
+        2: {  # Relevance of Layer 2 (Analysis & Research) memories to each layer
+            0: 0.4,   # Limited relevance to Requirement Validation
+            1: 0.6,   # Somewhat relevant to Task Definition
+            2: 1.0,   # To itself
+            3: 0.9,   # Highly relevant to Refinement
+            4: 0.8,   # Highly relevant to Prototyping
+            5: 0.7,   # Moderately relevant to Development
+            6: 0.6,   # Somewhat relevant to Testing & QA
+            7: 0.5,   # Somewhat relevant to Optimization
+            8: 0.6,   # Somewhat relevant to Deployment Preparation
+            9: 0.6,   # Somewhat relevant to Final Output
+            10: 0.5,  # Somewhat relevant to Monitoring & Feedback
+            11: 0.7   # Moderately relevant to Evolution & Maintenance
         },
-        4: {  # Relevance of Layer 4 memories to each layer
-            1: 0.3,  # Layer 4 memories have some relevance to Layer 1
-            2: 0.6,  # Layer 4 memories have moderate relevance to Layer 2
-            3: 0.8,  # Layer 4 memories are highly relevant to Layer 3
-            4: 1.0,  # To itself
-            5: 0.9   # Layer 4 memories are highly relevant to Layer 5
+        3: {  # Relevance of Layer 3 (Refinement) memories to each layer
+            0: 0.3,   # Limited relevance to Requirement Validation
+            1: 0.5,   # Somewhat relevant to Task Definition
+            2: 0.7,   # Moderately relevant to Analysis & Research
+            3: 1.0,   # To itself
+            4: 0.9,   # Highly relevant to Prototyping
+            5: 0.8,   # Highly relevant to Development
+            6: 0.7,   # Moderately relevant to Testing & QA
+            7: 0.6,   # Somewhat relevant to Optimization
+            8: 0.7,   # Moderately relevant to Deployment Preparation
+            9: 0.7,   # Moderately relevant to Final Output
+            10: 0.6,  # Somewhat relevant to Monitoring & Feedback
+            11: 0.7   # Moderately relevant to Evolution & Maintenance
         },
-        5: {  # Relevance of Layer 5 memories to each layer
-            1: 0.2,  # Layer 5 memories have minimal relevance to Layer 1
-            2: 0.3,  # Layer 5 memories have limited relevance to Layer 2
-            3: 0.4,  # Layer 5 memories have some relevance to Layer 3
-            4: 0.5,  # Layer 5 memories have moderate relevance to Layer 4
-            5: 1.0   # To itself
+        4: {  # Relevance of Layer 4 (Prototyping) memories to each layer
+            0: 0.2,   # Minimal relevance to Requirement Validation
+            1: 0.4,   # Limited relevance to Task Definition
+            2: 0.6,   # Somewhat relevant to Analysis & Research
+            3: 0.8,   # Highly relevant to Refinement
+            4: 1.0,   # To itself
+            5: 0.9,   # Highly relevant to Development
+            6: 0.8,   # Highly relevant to Testing & QA
+            7: 0.7,   # Moderately relevant to Optimization
+            8: 0.6,   # Somewhat relevant to Deployment Preparation
+            9: 0.7,   # Moderately relevant to Final Output
+            10: 0.5,  # Somewhat relevant to Monitoring & Feedback
+            11: 0.6   # Somewhat relevant to Evolution & Maintenance
+        },
+        5: {  # Relevance of Layer 5 (Development) memories to each layer
+            0: 0.1,   # Minimal relevance to Requirement Validation
+            1: 0.3,   # Limited relevance to Task Definition
+            2: 0.5,   # Somewhat relevant to Analysis & Research
+            3: 0.7,   # Moderately relevant to Refinement
+            4: 0.8,   # Highly relevant to Prototyping
+            5: 1.0,   # To itself
+            6: 0.9,   # Highly relevant to Testing & QA
+            7: 0.8,   # Highly relevant to Optimization
+            8: 0.7,   # Moderately relevant to Deployment Preparation
+            9: 0.8,   # Highly relevant to Final Output
+            10: 0.7,  # Moderately relevant to Monitoring & Feedback
+            11: 0.7   # Moderately relevant to Evolution & Maintenance
+        },
+        6: {  # Relevance of Layer 6 (Testing & QA) memories to each layer
+            0: 0.1,   # Minimal relevance to Requirement Validation
+            1: 0.2,   # Minimal relevance to Task Definition
+            2: 0.4,   # Limited relevance to Analysis & Research
+            3: 0.5,   # Somewhat relevant to Refinement
+            4: 0.6,   # Somewhat relevant to Prototyping
+            5: 0.8,   # Highly relevant to Development
+            6: 1.0,   # To itself
+            7: 0.9,   # Highly relevant to Optimization
+            8: 0.8,   # Highly relevant to Deployment Preparation
+            9: 0.7,   # Moderately relevant to Final Output
+            10: 0.8,  # Highly relevant to Monitoring & Feedback
+            11: 0.7   # Moderately relevant to Evolution & Maintenance
+        },
+        7: {  # Relevance of Layer 7 (Optimization) memories to each layer
+            0: 0.1,   # Minimal relevance to Requirement Validation
+            1: 0.2,   # Minimal relevance to Task Definition
+            2: 0.3,   # Limited relevance to Analysis & Research
+            3: 0.4,   # Limited relevance to Refinement
+            4: 0.5,   # Somewhat relevant to Prototyping
+            5: 0.8,   # Highly relevant to Development
+            6: 0.9,   # Highly relevant to Testing & QA
+            7: 1.0,   # To itself
+            8: 0.9,   # Highly relevant to Deployment Preparation
+            9: 0.8,   # Highly relevant to Final Output
+            10: 0.8,  # Highly relevant to Monitoring & Feedback
+            11: 0.7   # Moderately relevant to Evolution & Maintenance
+        },
+        8: {  # Relevance of Layer 8 (Deployment Preparation) memories to each layer
+            0: 0.1,   # Minimal relevance to Requirement Validation
+            1: 0.2,   # Minimal relevance to Task Definition
+            2: 0.3,   # Limited relevance to Analysis & Research
+            3: 0.4,   # Limited relevance to Refinement
+            4: 0.4,   # Limited relevance to Prototyping
+            5: 0.6,   # Somewhat relevant to Development
+            6: 0.7,   # Moderately relevant to Testing & QA
+            7: 0.8,   # Highly relevant to Optimization
+            8: 1.0,   # To itself
+            9: 0.9,   # Highly relevant to Final Output
+            10: 0.9,  # Highly relevant to Monitoring & Feedback
+            11: 0.8   # Highly relevant to Evolution & Maintenance
+        },
+        9: {  # Relevance of Layer 9 (Final Output) memories to each layer
+            0: 0.2,   # Minimal relevance to Requirement Validation
+            1: 0.3,   # Limited relevance to Task Definition
+            2: 0.3,   # Limited relevance to Analysis & Research
+            3: 0.4,   # Limited relevance to Refinement
+            4: 0.5,   # Somewhat relevant to Prototyping
+            5: 0.6,   # Somewhat relevant to Development
+            6: 0.6,   # Somewhat relevant to Testing & QA
+            7: 0.7,   # Moderately relevant to Optimization
+            8: 0.8,   # Highly relevant to Deployment Preparation
+            9: 1.0,   # To itself
+            10: 0.9,  # Highly relevant to Monitoring & Feedback
+            11: 0.8   # Highly relevant to Evolution & Maintenance
+        },
+        10: {  # Relevance of Layer 10 (Monitoring & Feedback) memories to each layer
+            0: 0.3,   # Limited relevance to Requirement Validation
+            1: 0.4,   # Limited relevance to Task Definition
+            2: 0.4,   # Limited relevance to Analysis & Research
+            3: 0.4,   # Limited relevance to Refinement
+            4: 0.5,   # Somewhat relevant to Prototyping
+            5: 0.6,   # Somewhat relevant to Development
+            6: 0.7,   # Moderately relevant to Testing & QA
+            7: 0.8,   # Highly relevant to Optimization
+            8: 0.7,   # Moderately relevant to Deployment Preparation
+            9: 0.8,   # Highly relevant to Final Output
+            10: 1.0,  # To itself
+            11: 0.9   # Highly relevant to Evolution & Maintenance
+        },
+        11: {  # Relevance of Layer 11 (Evolution & Maintenance) memories to each layer
+            0: 0.4,   # Limited relevance to Requirement Validation
+            1: 0.5,   # Somewhat relevant to Task Definition
+            2: 0.5,   # Somewhat relevant to Analysis & Research
+            3: 0.5,   # Somewhat relevant to Refinement
+            4: 0.5,   # Somewhat relevant to Prototyping
+            5: 0.6,   # Somewhat relevant to Development
+            6: 0.6,   # Somewhat relevant to Testing & QA
+            7: 0.7,   # Moderately relevant to Optimization
+            8: 0.7,   # Moderately relevant to Deployment Preparation
+            9: 0.7,   # Moderately relevant to Final Output
+            10: 0.8,  # Highly relevant to Monitoring & Feedback
+            11: 1.0   # To itself
         }
     }
     
@@ -1617,18 +1751,6 @@ class DomainSpecializationEngine:
     def get_domain_evaluation_criteria(cls, domain: str) -> List[str]:
         """Get specialized evaluation criteria for a domain"""
         return cls.DOMAIN_EVALUATION_CRITERIA.get(domain, [])
-        
-    @classmethod
-    def get_available_domains(cls) -> List[Dict[str, Any]]:
-        """Get a list of all available domain specializations"""
-        domains = []
-        for domain_id, domain_data in cls.DOMAIN_SPECIALIZATIONS.items():
-            domains.append({
-                'id': domain_id,
-                'name': domain_data['name'],
-                'description': domain_data['description']
-            })
-        return domains
     
     @classmethod
     def apply_domain_specialization(cls, prompt: str, domain: str, layer: int) -> str:
