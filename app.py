@@ -49,6 +49,21 @@ with app.app_context():
     # Make sure to import the models here
     import models
     db.create_all()
+    
+    # Create default admin user for testing purposes
+    # Note: This is only for testing and should be changed in production
+    default_admin_email = "admin@hacf.com"
+    if not models.User.query.filter_by(email=default_admin_email).first():
+        logger.info("Creating default admin user for testing")
+        admin_user = models.User(
+            username="admin",
+            email=default_admin_email,
+            role="admin"
+        )
+        admin_user.set_password("admin123")
+        db.session.add(admin_user)
+        db.session.commit()
+        logger.info("Default admin user created successfully")
 
 @app.route('/')
 def home():

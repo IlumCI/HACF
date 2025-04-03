@@ -10,33 +10,11 @@ class User(UserMixin, db.Model):
     username = db.Column(db.String(64), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(256))
-    conversations = db.relationship('Conversation', backref='user', lazy=True)
-    projects = db.relationship('Project', backref='user', lazy=True)
-    templates = db.relationship('ProjectTemplate', backref='user', lazy=True)
+    conversations = db.relationship('Conversation', backref='user', lazy=True, foreign_keys='Conversation.user_id')
+    projects = db.relationship('Project', backref='user', lazy=True, foreign_keys='Project.user_id')
     
-    # User profile fields
-    profile_picture = db.Column(db.String(255), nullable=True)  # URL to profile image
-    bio = db.Column(db.Text, nullable=True)  # User biography/description
-    company = db.Column(db.String(100), nullable=True)  # User's company or organization
-    job_title = db.Column(db.String(100), nullable=True)  # User's job title
-    website = db.Column(db.String(255), nullable=True)  # User's personal website
-    location = db.Column(db.String(100), nullable=True)  # User's location
-    
-    # Preferences
-    preferred_technologies = db.Column(db.Text, nullable=True)  # JSON string of preferred technologies
-    theme_preference = db.Column(db.String(20), default='dark')  # 'light', 'dark', 'system'
-    email_notifications = db.Column(db.Boolean, default=True)  # Whether to send email notifications
-    
-    # API integration
-    api_key = db.Column(db.String(64), nullable=True, unique=True)  # Personal API key
-    api_quota = db.Column(db.Integer, default=100)  # API usage quota
-    api_usage_count = db.Column(db.Integer, default=0)  # Current API usage
-    
-    # Role-based access control fields
+    # Role-based access control field - add this column to the database
     role = db.Column(db.String(20), default='user')  # 'user', 'admin', 'manager'
-    is_active = db.Column(db.Boolean, default=True)
-    last_login = db.Column(db.DateTime, nullable=True)
-    registration_date = db.Column(db.DateTime, default=datetime.utcnow)
     
     def set_password(self, password):
         """Set password hash"""
